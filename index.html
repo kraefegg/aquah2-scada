@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AquaH₂ · Kraefegg M.O. — Green Hydrogen AI Platform</title>
+<meta name="description" content="Plataforma AI-SCADA para produção de hidrogênio verde e dessalinização. Desenvolvida por Kraefegg M.O. — Developer Railson. Nordeste do Brasil.">
+<meta property="og:title" content="AquaH₂ AI-SCADA · Kraefegg M.O.">
+<meta property="og:description" content="Controle industrial por inteligência artificial para H₂ verde + SWRO. Python · Open Source · IEC 62443.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04080F;--bg1:#080F1A;--bg2:#0C1622;--bg3:#111D2E;
+  --teal:#00C9A7;--teal2:#00A688;--teal3:rgba(0,201,167,.08);
+  --blue:#2D7DD2;--amber:#F59E0B;
+  --txt:#C8D8F0;--txt2:#5A7A9B;--txt3:#1E3050;
+  --mono:'JetBrains Mono',monospace;
+  --syne:'Syne',sans-serif;
+  --dm:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:var(--dm);overflow-x:hidden}
+::selection{background:rgba(0,201,167,.25)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
+
+/* ── GRID BG ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,201,167,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,201,167,.025) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:0 5%;
+  display:flex;align-items:center;justify-content:space-between;
+  height:64px;
+  background:rgba(4,8,15,.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(0,201,167,.08);
+}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo-mark{
+  width:32px;height:32px;border-radius:8px;background:var(--teal);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.nav-logo-mark svg{width:18px;height:18px}
+.nav-brand{font-family:var(--syne);font-size:15px;font-weight:700;color:#fff;letter-spacing:.01em}
+.nav-brand span{color:var(--teal)}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:13px;color:var(--txt2);text-decoration:none;transition:color .2s;font-weight:400}
+.nav-links a:hover{color:var(--teal)}
+.nav-cta{
+  padding:8px 18px;background:var(--teal);border-radius:8px;
+  font-size:13px;font-weight:600;color:#001a14;text-decoration:none;
+  transition:background .2s;letter-spacing:.02em;
+}
+.nav-cta:hover{background:var(--teal2);color:#001a14}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:120px 5% 80px;text-align:center;
+  position:relative;z-index:1;
+}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:20px;
+  background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);
+  font-size:12px;font-weight:500;color:var(--teal);letter-spacing:.05em;
+  text-transform:uppercase;margin-bottom:28px;
+}
+.hero-tag-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.hero h1{
+  font-family:var(--syne);font-size:clamp(42px,7vw,88px);font-weight:800;
+  line-height:.95;letter-spacing:-.03em;color:#fff;margin-bottom:20px;
+}
+.hero h1 span{color:var(--teal)}
+.hero-sub{
+  font-size:clamp(15px,2vw,19px);color:var(--txt2);max-width:640px;
+  line-height:1.7;margin-bottom:44px;font-weight:300;
+}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:70px}
+.btn-primary{
+  padding:14px 28px;background:var(--teal);border-radius:10px;
+  font-family:var(--syne);font-size:14px;font-weight:600;color:#001a14;
+  text-decoration:none;letter-spacing:.03em;transition:all .2s;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary:hover{background:var(--teal2);transform:translateY(-1px)}
+.btn-secondary{
+  padding:14px 28px;background:transparent;border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;font-family:var(--syne);font-size:14px;font-weight:500;
+  color:var(--txt);text-decoration:none;letter-spacing:.03em;transition:all .2s;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-secondary:hover{border-color:var(--teal);color:var(--teal)}
+
+/* ── HERO TERMINAL ── */
+.hero-terminal{
+  width:100%;max-width:680px;
+  background:var(--bg1);border:1px solid rgba(0,201,167,.15);
+  border-radius:14px;overflow:hidden;text-align:left;
+}
+.term-bar{
+  background:var(--bg2);padding:10px 16px;
+  display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.term-dot{width:10px;height:10px;border-radius:50%}
+.td-r{background:#EF4444}.td-y{background:#F59E0B}.td-g{background:#22C55E}
+.term-title{font-family:var(--mono);font-size:11px;color:var(--txt2);margin-left:auto;margin-right:auto}
+.term-body{padding:20px 24px;font-family:var(--mono);font-size:13px;line-height:2}
+.t-comment{color:var(--txt3)}
+.t-cmd{color:var(--teal)}
+.t-out{color:var(--txt2)}
+.t-ok{color:#22C55E}
+.t-warn{color:var(--amber)}
+.t-cursor{
+  display:inline-block;width:8px;height:14px;background:var(--teal);
+  vertical-align:middle;animation:blink .8s step-end infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── STATS BAR ── */
+.stats{
+  position:relative;z-index:1;
+  display:flex;justify-content:center;flex-wrap:wrap;gap:0;
+  border-top:1px solid rgba(255,255,255,.05);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  background:var(--bg1);
+}
+.stat-item{
+  padding:28px 40px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  border-right:1px solid rgba(255,255,255,.05);flex:1;min-width:160px;
+}
+.stat-item:last-child{border-right:none}
+.stat-val{font-family:var(--syne);font-size:32px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.stat-val span{color:var(--teal)}
+.stat-label{font-size:12px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+
+/* ── SECTIONS ── */
+section{position:relative;z-index:1;padding:100px 5%}
+.section-tag{
+  font-size:11px;font-weight:600;color:var(--teal);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:14px;display:block;
+}
+.section-title{
+  font-family:var(--syne);font-size:clamp(28px,4vw,46px);font-weight:700;
+  color:#fff;line-height:1.1;letter-spacing:-.02em;margin-bottom:16px;
+}
+.section-sub{font-size:16px;color:var(--txt2);max-width:560px;line-height:1.7;font-weight:300}
+
+/* ── FEATURES ── */
+.features-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1px;background:rgba(255,255,255,.05);border-radius:16px;overflow:hidden;
+  margin-top:60px;border:1px solid rgba(255,255,255,.05);
+}
+.feature{
+  background:var(--bg1);padding:36px 32px;transition:background .2s;
+}
+.feature:hover{background:var(--bg2)}
+.feature-icon{
+  width:44px;height:44px;border-radius:10px;background:var(--teal3);
+  border:1px solid rgba(0,201,167,.2);
+  display:flex;align-items:center;justify-content:center;margin-bottom:18px;
+}
+.feature-icon svg{width:22px;height:22px;stroke:var(--teal);fill:none;stroke-width:1.6;stroke-linecap:round}
+.feature h3{font-family:var(--syne);font-size:17px;font-weight:600;color:#fff;margin-bottom:10px}
+.feature p{font-size:14px;color:var(--txt2);line-height:1.7;font-weight:300}
+
+/* ── SCREENS SHOWCASE ── */
+.screens{background:var(--bg1);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
+.screens-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:60px;
+}
+.screen-card{
+  background:var(--bg2);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;overflow:hidden;transition:border-color .2s,transform .2s;
+}
+.screen-card:hover{border-color:rgba(0,201,167,.3);transform:translateY(-3px)}
+.screen-preview{
+  height:180px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;color:var(--txt3);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  position:relative;overflow:hidden;
+}
+.screen-preview svg{opacity:.15;position:absolute}
+.screen-label{
+  padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
+}
+.screen-name{font-family:var(--syne);font-size:13px;font-weight:600;color:var(--txt)}
+.screen-badge{
+  font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;
+  background:var(--teal3);color:var(--teal);border:1px solid rgba(0,201,167,.2);
+  text-transform:uppercase;letter-spacing:.04em;
+}
+
+/* ── TECH STACK ── */
+.tech-list{
+  display:flex;flex-wrap:wrap;gap:10px;margin-top:40px;
+}
+.tech-pill{
+  padding:8px 16px;background:var(--bg2);border:1px solid rgba(255,255,255,.08);
+  border-radius:8px;font-family:var(--mono);font-size:12px;color:var(--txt2);
+  transition:all .2s;
+}
+.tech-pill:hover{border-color:var(--teal);color:var(--teal)}
+.tech-pill strong{color:var(--txt)}
+
+/* ── HARDWARE ── */
+.hardware-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;margin-top:40px;
+}
+.hw-card{
+  background:var(--bg2);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;padding:20px;transition:border-color .2s;
+}
+.hw-card:hover{border-color:rgba(45,125,210,.4)}
+.hw-proto{
+  font-family:var(--mono);font-size:11px;font-weight:500;color:var(--blue);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:block;
+}
+.hw-card h4{font-family:var(--syne);font-size:14px;font-weight:600;color:#fff;margin-bottom:6px}
+.hw-card p{font-size:12px;color:var(--txt2);line-height:1.6}
+
+/* ── CTA ── */
+.cta-section{
+  text-align:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(0,201,167,.06) 0%,transparent 70%);
+}
+.cta-section .section-title{font-size:clamp(32px,5vw,56px)}
+.cta-section .section-sub{margin:0 auto 40px}
+
+/* ── FOOTER ── */
+footer{
+  position:relative;z-index:1;
+  border-top:1px solid rgba(255,255,255,.05);
+  padding:40px 5%;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:16px;
+}
+.footer-left{display:flex;align-items:center;gap:10px}
+.footer-brand{font-family:var(--syne);font-size:13px;font-weight:600;color:var(--txt2)}
+.footer-brand span{color:var(--teal)}
+.footer-right{font-size:12px;color:var(--txt3)}
+.footer-links{display:flex;gap:20px}
+.footer-links a{font-size:12px;color:var(--txt2);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--teal)}
+
+/* ── ANIMATE IN ── */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:none}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .nav-links{display:none}
+  .screens-grid{grid-template-columns:1fr}
+  .stats{flex-direction:column}
+  .stat-item{border-right:none;border-bottom:1px solid rgba(255,255,255,.05);padding:20px 24px}
+  footer{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark">
+      <svg viewBox="0 0 18 18" fill="none" stroke="#001a14" stroke-width="2" stroke-linecap="round">
+        <circle cx="9" cy="9" r="7.5"/>
+        <path d="M6 9h6M9 6v6"/><circle cx="9" cy="9" r="2" fill="#001a14"/>
+      </svg>
+    </div>
+    <div class="nav-brand">AquaH<span>₂</span></div>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Funcionalidades</a>
+    <a href="#telas">Telas</a>
+    <a href="#hardware">Hardware</a>
+    <a href="#tecnologia">Tecnologia</a>
+    <a href="https://github.com/kraefegg/1aquah2-scada" target="_blank">GitHub</a>
+  </div>
+  <a href="https://github.com/kraefegg/1aquah2-scada" target="_blank" class="nav-cta">Ver no GitHub →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">
+    <span class="hero-tag-dot"></span>
+    Open Source · Kraefegg M.O. · Developer Railson
+  </div>
+  <h1>Hidrogênio Verde<br>controlado por <span>IA</span></h1>
+  <p class="hero-sub">Plataforma SCADA industrial completa para produção de H₂ verde via eletrolisador PEM e dessalinização SWRO — com motor de inteligência artificial embarcado. Zero dependências. Roda com <code style="font-family:var(--mono);color:var(--teal);font-size:14px">python3 run.py</code>.</p>
+  <div class="hero-btns">
+    <a href="https://github.com/kraefegg/1aquah2-scada" target="_blank" class="btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      Código no GitHub
+    </a>
+    <a href="#features" class="btn-secondary">
+      Ver funcionalidades ↓
+    </a>
+  </div>
+
+  <!-- Terminal -->
+  <div class="hero-terminal">
+    <div class="term-bar">
+      <div class="term-dot td-r"></div>
+      <div class="term-dot td-y"></div>
+      <div class="term-dot td-g"></div>
+      <span class="term-title">terminal — aquah2-scada</span>
+    </div>
+    <div class="term-body">
+      <div><span class="t-comment"># clonar e iniciar</span></div>
+      <div><span class="t-cmd">$ git clone https://github.com/kraefegg/1aquah2-scada.git</span></div>
+      <div><span class="t-out">Cloning into 'aquah2-scada'... done.</span></div>
+      <div><span class="t-cmd">$ cd aquah2-scada && python3 run.py</span></div>
+      <div><span class="t-ok">✓ Banco de dados:    aquah2_data.db</span></div>
+      <div><span class="t-ok">✓ Simulador:         planta AquaH₂ Hub RN-01</span></div>
+      <div><span class="t-ok">✓ Motor IA:          PID + anomalias + preditivo</span></div>
+      <div><span class="t-ok">✓ Threads:           Sensor (2s) + IA (10s)</span></div>
+      <div><span class="t-warn">→ Servidor HTTP:    http://localhost:8765</span></div>
+      <div><span class="t-out">  Abrindo browser automaticamente...</span> <span class="t-cursor"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-item reveal">
+    <div class="stat-val">50<span>MW</span></div>
+    <div class="stat-label">Capacidade PEM</div>
+  </div>
+  <div class="stat-item reveal">
+    <div class="stat-val">5.000<span>m³</span></div>
+    <div class="stat-label">Água/dia SWRO</div>
+  </div>
+  <div class="stat-item reveal">
+    <div class="stat-val">21<span>/21</span></div>
+    <div class="stat-label">Testes passando</div>
+  </div>
+  <div class="stat-item reveal">
+    <div class="stat-val">0<span>deps</span></div>
+    <div class="stat-label">Dependências externas</div>
+  </div>
+  <div class="stat-item reveal">
+    <div class="stat-val">10<span>telas</span></div>
+    <div class="stat-label">Interface SCADA</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <span class="section-tag">Funcionalidades</span>
+  <h2 class="section-title reveal">Controle industrial<br>com IA real</h2>
+  <p class="section-sub reveal">Não é simulação de interface. É um sistema SCADA funcional com motor de IA que toma decisões autônomas baseadas em física real.</p>
+
+  <div class="features-grid">
+    <div class="feature reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      </div>
+      <h3>Controle PID autônomo</h3>
+      <p>Controladores PID independentes para temperatura dos stacks A e B. Ajustam automaticamente o fluxo de água para manter operação no ponto ótimo de eficiência.</p>
+    </div>
+    <div class="feature reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <h3>Detecção de anomalias</h3>
+      <p>Z-score em janela deslizante de 30 amostras para cada sinal monitorado. Identifica desvios estatísticos antes que se tornem alarmes visíveis ao operador.</p>
+    </div>
+    <div class="feature reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>ESD automático SIL-2</h3>
+      <p>Sistema de parada de emergência conforme IEC 61511 SIL-2. Trip automático em temperatura, pressão H₂, LEL de hidrogênio e concentração de amônia.</p>
+    </div>
+    <div class="feature reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <h3>Manutenção preditiva</h3>
+      <p>Regressão linear (slope) em tempo real calcula ETA até o próximo alarme e agenda automaticamente procedimentos de manutenção antes da falha.</p>
+    </div>
+    <div class="feature reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <h3>Otimização energética</h3>
+      <p>Balanceamento automático entre Solar, Eólica e BESS para maximizar produção de H₂. Curva de potência eólica física implementada (cut-in 3 m/s, rated 11,5 m/s).</p>
+    </div>
+    <div class="feature reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <h3>Assistente em português</h3>
+      <p>Chat contextual com dados reais da planta. Responde sobre status, riscos, relatórios e otimizações. Integração opcional com API Claude para respostas profundas.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENS -->
+<section id="telas" class="screens">
+  <span class="section-tag">Interface</span>
+  <h2 class="section-title reveal">10 telas de operação</h2>
+  <p class="section-sub reveal">Da visualização do processo ao diagnóstico de rede IoT — tudo em uma interface que roda no browser, sem instalar nada.</p>
+
+  <div class="screens-grid">
+    <div class="screen-card reveal">
+      <div class="screen-preview" style="background:linear-gradient(135deg,#080F1A,#0C1622)">
+        <svg width="100%" height="100%" viewBox="0 0 400 180">
+          <rect x="20" y="20" width="80" height="40" rx="6" fill="#00C9A7" fill-opacity=".15" stroke="#00C9A7" stroke-width="1" stroke-opacity=".3"/>
+          <rect x="110" y="20" width="80" height="40" rx="6" fill="#2D7DD2" fill-opacity=".15" stroke="#2D7DD2" stroke-width="1" stroke-opacity=".3"/>
+          <rect x="200" y="20" width="80" height="40" rx="6" fill="#22C55E" fill-opacity=".15" stroke="#22C55E" stroke-width="1" stroke-opacity=".3"/>
+          <rect x="290" y="20" width="80" height="40" rx="6" fill="#F59E0B" fill-opacity=".15" stroke="#F59E0B" stroke-width="1" stroke-opacity=".3"/>
+          <polyline points="20,140 60,100 100,120 140,80 180,90 220,60 260,75 300,50 340,65 380,45" fill="none" stroke="#00C9A7" stroke-width="1.5" stroke-opacity=".6"/>
+          <polyline points="20,160 60,140 100,150 140,120 180,130 220,100 260,110 300,90 340,100 380,80" fill="none" stroke="#2D7DD2" stroke-width="1" stroke-opacity=".4"/>
+        </svg>
+      </div>
+      <div class="screen-label">
+        <span class="screen-name">Dashboard operacional</span>
+        <span class="screen-badge">Live</span>
+      </div>
+    </div>
+    <div class="screen-card reveal">
+      <div class="screen-preview" style="background:linear-gradient(135deg,#080F1A,#0C1622)">
+        <svg width="100%" height="100%" viewBox="0 0 400 180">
+          <rect x="30" y="70" width="60" height="40" rx="4" fill="#2D7DD2" fill-opacity=".2" stroke="#2D7DD2" stroke-width="1" stroke-opacity=".4"/>
+          <rect x="130" y="50" width="70" height="80" rx="4" fill="#00C9A7" fill-opacity=".2" stroke="#00C9A7" stroke-width="1.5" stroke-opacity=".5"/>
+          <rect x="250" y="50" width="70" height="80" rx="4" fill="#F59E0B" fill-opacity=".2" stroke="#F59E0B" stroke-width="1" stroke-opacity=".4"/>
+          <rect x="330" y="30" width="50" height="50" rx="4" fill="#8B5CF6" fill-opacity=".2" stroke="#8B5CF6" stroke-width="1" stroke-opacity=".4"/>
+          <line x1="90" y1="90" x2="130" y2="90" stroke="#2D7DD2" stroke-width="1.5" stroke-dasharray="4 2" stroke-opacity=".5"/>
+          <line x1="200" y1="90" x2="250" y2="90" stroke="#00C9A7" stroke-width="1.5" stroke-dasharray="4 2" stroke-opacity=".5"/>
+          <line x1="320" y1="90" x2="330" y2="55" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="4 2" stroke-opacity=".5"/>
+        </svg>
+      </div>
+      <div class="screen-label">
+        <span class="screen-name">Diagrama P&ID animado</span>
+        <span class="screen-badge">SVG</span>
+      </div>
+    </div>
+    <div class="screen-card reveal">
+      <div class="screen-preview" style="background:linear-gradient(135deg,#080F1A,#0C1622)">
+        <svg width="100%" height="100%" viewBox="0 0 400 180">
+          <circle cx="100" cy="90" r="55" fill="none" stroke="#111D2E" stroke-width="12"/>
+          <circle cx="100" cy="90" r="55" fill="none" stroke="#00C9A7" stroke-width="12" stroke-dasharray="245 100" stroke-linecap="round" transform="rotate(-90 100 90)" stroke-opacity=".8"/>
+          <circle cx="280" cy="90" r="55" fill="none" stroke="#111D2E" stroke-width="12"/>
+          <circle cx="280" cy="90" r="55" fill="none" stroke="#F59E0B" stroke-width="12" stroke-dasharray="200 145" stroke-linecap="round" transform="rotate(-90 280 90)" stroke-opacity=".8"/>
+          <text x="100" y="87" text-anchor="middle" font-family="monospace" font-size="16" fill="white" opacity=".9">71%</text>
+          <text x="100" y="103" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#5A7A9B">Stack A</text>
+          <text x="280" y="87" text-anchor="middle" font-family="monospace" font-size="16" fill="white" opacity=".9">79°C</text>
+          <text x="280" y="103" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#F59E0B">Stack B ⚠</text>
+        </svg>
+      </div>
+      <div class="screen-label">
+        <span class="screen-name">Eletrolisador PEM</span>
+        <span class="screen-badge">PID</span>
+      </div>
+    </div>
+    <div class="screen-card reveal">
+      <div class="screen-preview" style="background:linear-gradient(135deg,#080F1A,#0C1622)">
+        <svg width="100%" height="100%" viewBox="0 0 400 180">
+          <rect x="30" y="30" width="160" height="120" rx="8" fill="#080F1A" stroke="#EF4444" stroke-width="1.5" stroke-opacity=".5"/>
+          <rect x="210" y="30" width="160" height="120" rx="8" fill="#080F1A" stroke="#1D9E75" stroke-width="1.5" stroke-opacity=".5"/>
+          <rect x="40" y="50" width="140" height="30" rx="4" fill="#EF4444" fill-opacity=".1"/>
+          <rect x="220" y="50" width="140" height="30" rx="4" fill="#1D9E75" fill-opacity=".1"/>
+          <circle cx="50" cy="125" r="5" fill="#EF4444" fill-opacity=".8"/>
+          <rect x="62" y="120" width="100" height="8" rx="4" fill="#111D2E"/>
+          <rect x="62" y="120" width="30" height="8" rx="4" fill="#EF4444" fill-opacity=".6"/>
+          <circle cx="220" cy="125" r="5" fill="#1D9E75" fill-opacity=".8"/>
+          <rect x="232" y="120" width="100" height="8" rx="4" fill="#111D2E"/>
+          <rect x="232" y="120" width="82" height="8" rx="4" fill="#1D9E75" fill-opacity=".6"/>
+        </svg>
+      </div>
+      <div class="screen-label">
+        <span class="screen-name">Segurança & ESD</span>
+        <span class="screen-badge">SIL-2</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HARDWARE -->
+<section id="hardware">
+  <span class="section-tag">Integração</span>
+  <h2 class="section-title reveal">Conecta com hardware real</h2>
+  <p class="section-sub reveal">Em modo simulado para desenvolvimento. Em produção, substitua um método e conecte qualquer PLC ou sensor industrial.</p>
+
+  <div class="hardware-grid">
+    <div class="hw-card reveal">
+      <span class="hw-proto">MODBUS TCP/RTU</span>
+      <h4>Siemens S7, Allen-Bradley, ABB</h4>
+      <p>Leitura de registradores holding e coils. Escrita de setpoints direto no PLC via pymodbus.</p>
+    </div>
+    <div class="hw-card reveal">
+      <span class="hw-proto">OPC-UA</span>
+      <h4>Beckhoff TwinCAT, TIA Portal</h4>
+      <p>Protocolo nativo para Siemens S7-1500 com TIA Portal. Suporte a autenticação e criptografia.</p>
+    </div>
+    <div class="hw-card reveal">
+      <span class="hw-proto">MQTT</span>
+      <h4>ESP32, Raspberry Pi, LoRaWAN</h4>
+      <p>Sensores wireless publicam tópicos. O servidor subscreve e atualiza o estado da planta em tempo real.</p>
+    </div>
+    <div class="hw-card reveal">
+      <span class="hw-proto">RS-485</span>
+      <h4>Sensores de campo seriais</h4>
+      <p>PT100, transmissores 4–20 mA, medidores de vazão e pressão via MODBUS RTU serial.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="tecnologia" style="background:var(--bg1);border-top:1px solid rgba(255,255,255,.05)">
+  <span class="section-tag">Tecnologia</span>
+  <h2 class="section-title reveal">Construído com</h2>
+  <p class="section-sub reveal">Python puro para o servidor. Nenhuma dependência externa obrigatória — funciona em qualquer máquina com Python 3.8+.</p>
+
+  <div class="tech-list">
+    <div class="tech-pill reveal"><strong>Python 3.8+</strong> stdlib only</div>
+    <div class="tech-pill reveal"><strong>SQLite</strong> série temporal</div>
+    <div class="tech-pill reveal"><strong>WebSocket</strong> RFC 6455</div>
+    <div class="tech-pill reveal"><strong>HTTP server</strong> stdlib</div>
+    <div class="tech-pill reveal"><strong>Chart.js 4</strong> gráficos</div>
+    <div class="tech-pill reveal"><strong>SVG P&ID</strong> animado</div>
+    <div class="tech-pill reveal"><strong>PID controller</strong> embarcado</div>
+    <div class="tech-pill reveal"><strong>Z-score</strong> anomalias</div>
+    <div class="tech-pill reveal"><strong>Rolling regression</strong> tendência</div>
+    <div class="tech-pill reveal"><strong>FastAPI</strong> opcional</div>
+    <div class="tech-pill reveal"><strong>Claude API</strong> opcional</div>
+    <div class="tech-pill reveal"><strong>IEC 62443</strong> segurança</div>
+    <div class="tech-pill reveal"><strong>IEC 61511 SIL-2</strong> ESD</div>
+    <div class="tech-pill reveal"><strong>ISO 50001</strong> energia</div>
+    <div class="tech-pill reveal"><strong>IEC 62682</strong> alarmes</div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <span class="section-tag">Open Source</span>
+  <h2 class="section-title reveal">Pronto para usar</h2>
+  <p class="section-sub reveal">Clone o repositório, rode um comando e a plataforma está funcionando. Sem instalação, sem configuração, sem complicação.</p>
+  <div class="hero-btns">
+    <a href="https://github.com/kraefegg/1aquah2-scada" target="_blank" class="btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      Acessar o GitHub
+    </a>
+    <a href="https://github.com/kraefegg/1aquah2-scada/archive/refs/heads/main.zip" class="btn-secondary">
+      Baixar ZIP ↓
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <div class="nav-logo-mark" style="width:26px;height:26px;border-radius:6px">
+      <svg viewBox="0 0 18 18" fill="none" stroke="#001a14" stroke-width="2.2" stroke-linecap="round" width="14" height="14">
+        <circle cx="9" cy="9" r="7"/><path d="M6 9h6M9 6v6"/><circle cx="9" cy="9" r="1.8" fill="#001a14"/>
+      </svg>
+    </div>
+    <span class="footer-brand">AquaH<span>₂</span> AI-SCADA · Kraefegg M.O. · Developer Railson</span>
+  </div>
+  <div class="footer-links">
+    <a href="https://github.com/kraefegg/1aquah2-scada" target="_blank">GitHub</a>
+    <a href="https://github.com/kraefegg/1aquah2-scada/blob/main/docs/api.md" target="_blank">API</a>
+    <a href="https://github.com/kraefegg/1aquah2-scada/blob/main/LICENSE" target="_blank">MIT License</a>
+  </div>
+  <div class="footer-right">© 2026 Kraefegg M.O. · Nordeste, Brasil</div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

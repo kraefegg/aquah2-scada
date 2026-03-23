@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AquaH₂ — AI-SCADA Platform · Kraefegg M.O.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg0:#05080F;--bg1:#0B1320;--bg2:#111D2E;--bg3:#162338;
+  --bdr:rgba(255,255,255,.07);--bdr2:rgba(255,255,255,.12);
+  --teal:#00C9A7;--teal2:#00A88B;--teal-bg:rgba(0,201,167,.08);
+  --blue:#3B8FD4;--blue-bg:rgba(59,143,212,.08);
+  --amber:#F59E0B;--amber-bg:rgba(245,158,11,.08);
+  --red:#EF4444;--red-bg:rgba(239,68,68,.08);
+  --green:#10B981;--green-bg:rgba(16,185,129,.08);
+  --purple:#8B5CF6;--purple-bg:rgba(139,92,246,.08);
+  --txt:#D1DCF0;--txt2:#5C7A9B;--txt3:#2E4260;
+  --mono:'JetBrains Mono',monospace;--ui:'Barlow',sans-serif;
+  --r4:4px;--r8:8px;--r12:12px;--r16:16px;
+  --sidebar:220px;--hdr:52px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg0);color:var(--txt);font-family:var(--ui);font-size:13px}
+::selection{background:rgba(0,201,167,.25)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg1)}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
+
+/* ── LOGIN ───────────────────────────────────────────────────── */
+#login{position:fixed;inset:0;z-index:999;background:var(--bg0);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
+.login-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(0,201,167,.06) 0%,transparent 70%)}
+.login-grid{position:absolute;inset:0;background-image:linear-gradient(var(--bdr) 1px,transparent 1px),linear-gradient(90deg,var(--bdr) 1px,transparent 1px);background-size:40px 40px;opacity:.4}
+.login-box{position:relative;z-index:1;width:380px;padding:40px 36px 36px;background:var(--bg1);border:1px solid var(--bdr2);border-radius:var(--r16)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.login-logo-icon{width:38px;height:38px;border-radius:8px;background:var(--teal);display:flex;align-items:center;justify-content:center}
+.login-logo-icon svg{width:22px;height:22px}
+.login-brand{font-size:16px;font-weight:700;letter-spacing:.02em}
+.login-brand span{color:var(--teal)}
+.login-sub{font-size:11px;color:var(--txt2);margin-top:2px;letter-spacing:.04em;text-transform:uppercase}
+.login-label{font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:block}
+.login-field{width:100%;padding:10px 12px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r8);color:var(--txt);font-family:var(--mono);font-size:13px;outline:none;margin-bottom:14px;transition:border-color .2s}
+.login-field:focus{border-color:var(--teal)}
+.login-btn{width:100%;padding:12px;background:var(--teal);border:none;border-radius:var(--r8);color:#001A14;font-family:var(--ui);font-size:14px;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:background .2s;margin-top:4px}
+.login-btn:hover{background:var(--teal2)}
+.login-footer{margin-top:20px;text-align:center;font-size:11px;color:var(--txt3)}
+.login-warning{background:var(--amber-bg);border:1px solid rgba(245,158,11,.2);border-radius:var(--r8);padding:10px 12px;font-size:11px;color:var(--amber);margin-bottom:20px;line-height:1.5}
+
+/* ── APP SHELL ────────────────────────────────────────────────── */
+#app{display:none;height:100%;flex-direction:column}
+#app.visible{display:flex}
+
+/* ── HEADER ──────────────────────────────────────────────────── */
+.hdr{height:var(--hdr);background:var(--bg1);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 20px 0 0;gap:0;flex-shrink:0;position:relative;z-index:10}
+.hdr-logo{width:var(--sidebar);display:flex;align-items:center;gap:10px;padding:0 18px;flex-shrink:0;border-right:1px solid var(--bdr)}
+.hdr-logo-icon{width:28px;height:28px;background:var(--teal);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hdr-logo-icon svg{width:16px;height:16px}
+.hdr-brand{font-size:14px;font-weight:700;letter-spacing:.01em}
+.hdr-brand span{color:var(--teal)}
+.hdr-plant{display:flex;align-items:center;gap:6px;padding:0 20px;border-right:1px solid var(--bdr)}
+.hdr-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0}
+.hdr-dot.warn{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.hdr-dot.alarm{background:var(--red);box-shadow:0 0 6px var(--red)}
+.hdr-plant-name{font-size:12px;font-weight:500;color:var(--txt)}
+.hdr-plant-status{font-size:11px;color:var(--txt2)}
+.hdr-metrics{display:flex;gap:0;margin-left:8px;flex:1}
+.hdr-metric{display:flex;flex-direction:column;padding:0 18px;border-right:1px solid var(--bdr);cursor:default}
+.hdr-metric-label{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em}
+.hdr-metric-val{font-family:var(--mono);font-size:13px;font-weight:500;line-height:1.4}
+.hdr-metric-val.ok{color:var(--green)}
+.hdr-metric-val.warn{color:var(--amber)}
+.hdr-metric-val.info{color:var(--teal)}
+.hdr-right{display:flex;align-items:center;gap:14px;margin-left:auto;padding-left:16px}
+.hdr-clock{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--txt2)}
+.hdr-alarm-btn{display:flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid rgba(239,68,68,.3);border-radius:var(--r8);background:var(--red-bg);color:var(--red);font-size:11px;cursor:pointer;font-weight:500}
+.hdr-alarm-btn.clear{border-color:var(--bdr);background:transparent;color:var(--txt2)}
+.hdr-user{display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bg2);border-radius:var(--r8);cursor:pointer}
+.hdr-avatar{width:26px;height:26px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#001A14}
+.hdr-username{font-size:12px;font-weight:500}
+
+/* ── BODY LAYOUT ─────────────────────────────────────────────── */
+.app-body{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────── */
+.sidebar{width:var(--sidebar);background:var(--bg1);border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;padding:10px 0}
+.nav-section-label{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;padding:10px 18px 4px;font-weight:500}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;border-radius:0;transition:background .15s;border-left:3px solid transparent;color:var(--txt2);font-size:13px;font-weight:400}
+.nav-item:hover{background:rgba(255,255,255,.03);color:var(--txt)}
+.nav-item.active{background:var(--teal-bg);border-left-color:var(--teal);color:var(--teal)}
+.nav-icon{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:600;background:var(--red);color:#fff;border-radius:20px;padding:1px 6px;line-height:1.6}
+.nav-badge.warn{background:var(--amber)}
+.sidebar-footer{margin-top:auto;padding:12px 18px;border-top:1px solid var(--bdr);font-size:11px;color:var(--txt3)}
+
+/* ── CONTENT ─────────────────────────────────────────────────── */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px}
+.screen{display:none}.screen.active{display:block}
+.screen-title{font-size:18px;font-weight:600;margin-bottom:4px}
+.screen-sub{font-size:12px;color:var(--txt2);margin-bottom:20px}
+
+/* ── CARDS ───────────────────────────────────────────────────── */
+.card{background:var(--bg1);border:1px solid var(--bdr);border-radius:var(--r12);padding:16px 18px}
+.card-title{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card-title-icon{width:14px;height:14px;opacity:.6}
+.g1{display:grid;grid-template-columns:1fr;gap:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.g-full{display:grid;grid-template-columns:1fr;gap:12px}
+.mb12{margin-bottom:12px}
+
+/* ── KPI CARDS ──────────────────────────────────────────────── */
+.kpi{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r12);padding:14px 16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.teal::before{background:var(--teal)}
+.kpi.blue::before{background:var(--blue)}
+.kpi.green::before{background:var(--green)}
+.kpi.amber::before{background:var(--amber)}
+.kpi.purple::before{background:var(--purple)}
+.kpi-label{font-size:10px;color:var(--txt2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.kpi-val{font-family:var(--mono);font-size:22px;font-weight:500;line-height:1.1;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--txt2)}
+.kpi-delta{font-size:11px;font-weight:500;margin-top:4px}
+.kpi-delta.up{color:var(--green)}.kpi-delta.down{color:var(--red)}.kpi-delta.neutral{color:var(--txt2)}
+
+/* ── SENSOR TABLE ─────────────────────────────────────────────── */
+.sensor-table{width:100%;border-collapse:collapse}
+.sensor-table th{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;padding:6px 8px;text-align:left;border-bottom:1px solid var(--bdr);font-weight:500}
+.sensor-table td{padding:8px 8px;border-bottom:1px solid var(--bdr);vertical-align:middle;font-size:12px}
+.sensor-table tr:last-child td{border-bottom:none}
+.sensor-table tr:hover td{background:rgba(255,255,255,.015)}
+.sval{font-family:var(--mono);font-size:13px;font-weight:500}
+.sval.ok{color:var(--green)}.sval.warn{color:var(--amber)}.sval.alarm{color:var(--red)}.sval.info{color:var(--teal)}
+.sbar-wrap{width:70px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle}
+.sbar{height:100%;border-radius:2px;transition:width .8s ease}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.badge.ok{background:var(--green-bg);color:var(--green)}
+.badge.warn{background:var(--amber-bg);color:var(--amber)}
+.badge.alarm{background:var(--red-bg);color:var(--red)}
+.badge.info{background:var(--teal-bg);color:var(--teal)}
+.badge.off{background:rgba(255,255,255,.04);color:var(--txt2)}
+
+/* ── RING GAUGE ─────────────────────────────────────────────── */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ring-label{font-size:11px;color:var(--txt2);text-align:center}
+
+/* ── CONTROLS ────────────────────────────────────────────────── */
+.ctrl-group{display:flex;flex-direction:column;gap:10px}
+.ctrl-row{display:flex;align-items:center;gap:10px}
+.ctrl-label{font-size:12px;color:var(--txt2);min-width:160px;flex-shrink:0}
+.ctrl-slider{flex:1;-webkit-appearance:none;height:4px;background:var(--bg3);border-radius:2px;outline:none}
+.ctrl-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--teal);cursor:pointer;border:2px solid var(--bg1)}
+.ctrl-val{font-family:var(--mono);font-size:12px;font-weight:500;min-width:64px;text-align:right;color:var(--teal)}
+.toggle-wrap{display:flex;align-items:center;gap:10px}
+.toggle-label{font-size:12px;color:var(--txt2);flex:1}
+.toggle{width:38px;height:20px;border-radius:10px;background:var(--bg3);border:1px solid var(--bdr2);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--teal)}
+.toggle-knob{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;pointer-events:none}
+.toggle.on .toggle-knob{transform:translateX(18px)}
+.btn-primary{padding:8px 16px;background:var(--teal);border:none;border-radius:var(--r8);color:#001A14;font-family:var(--ui);font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.03em;transition:background .2s}
+.btn-primary:hover{background:var(--teal2)}
+.btn-secondary{padding:7px 14px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--r8);color:var(--txt2);font-family:var(--ui);font-size:12px;cursor:pointer;transition:all .2s}
+.btn-secondary:hover{border-color:var(--teal);color:var(--teal)}
+.btn-danger{padding:7px 14px;background:var(--red-bg);border:1px solid rgba(239,68,68,.3);border-radius:var(--r8);color:var(--red);font-family:var(--ui);font-size:12px;font-weight:600;cursor:pointer}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── ALARM TABLE ─────────────────────────────────────────────── */
+.alarm-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid var(--bdr);transition:background .15s}
+.alarm-row:hover{background:rgba(255,255,255,.02)}
+.alarm-row:last-child{border-bottom:none}
+.alarm-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.alarm-dot.critical{background:var(--red);box-shadow:0 0 6px var(--red);animation:blink 1s ease-in-out infinite}
+.alarm-dot.warn{background:var(--amber)}
+.alarm-dot.info{background:var(--blue)}
+.alarm-dot.ok{background:var(--green)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.alarm-content{flex:1}
+.alarm-title{font-size:12px;font-weight:500;color:var(--txt);margin-bottom:2px}
+.alarm-detail{font-size:11px;color:var(--txt2);line-height:1.4}
+.alarm-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.alarm-time{font-size:10px;color:var(--txt3);font-family:var(--mono)}
+.alarm-ack{font-size:10px;padding:2px 8px;border:1px solid var(--bdr2);border-radius:20px;background:transparent;color:var(--txt2);cursor:pointer;transition:all .2s;font-family:var(--ui)}
+.alarm-ack:hover{border-color:var(--teal);color:var(--teal)}
+
+/* ── NETWORK ─────────────────────────────────────────────────── */
+.net-container{position:relative;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r12);overflow:hidden}
+.net-svg{width:100%;display:block}
+.net-legend{display:flex;gap:16px;padding:10px 16px;border-top:1px solid var(--bdr);font-size:11px;color:var(--txt2)}
+.net-legend-item{display:flex;align-items:center;gap:6px}
+.net-legend-line{width:20px;height:2px;border-radius:1px}
+
+/* ── CHART CONTAINERS ────────────────────────────────────────── */
+.chart-wrap{position:relative;width:100%}
+.chart-wrap canvas{width:100%!important}
+
+/* ── AI CHAT ─────────────────────────────────────────────────── */
+.chat-area{display:flex;flex-direction:column;gap:10px;min-height:240px;max-height:380px;overflow-y:auto;padding:12px}
+.chat-msg{max-width:85%;padding:10px 12px;border-radius:var(--r12);font-size:12px;line-height:1.6}
+.chat-ai{background:var(--bg2);border:1px solid var(--bdr);color:var(--txt);align-self:flex-start;border-bottom-left-radius:4px}
+.chat-ai strong{color:var(--teal)}
+.chat-user{background:var(--teal);color:#001A14;align-self:flex-end;font-weight:500;border-bottom-right-radius:4px}
+.chat-thinking{background:var(--bg2);border:1px solid var(--bdr);align-self:flex-start;padding:10px 12px;border-radius:var(--r12)}
+.thinking-dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal);margin-right:3px;animation:tdot 1.2s ease-in-out infinite}
+.thinking-dots span:nth-child(2){animation-delay:.2s}
+.thinking-dots span:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.chat-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--bdr)}
+.chat-input{flex:1;padding:8px 12px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r8);color:var(--txt);font-family:var(--ui);font-size:12px;outline:none}
+.chat-input:focus{border-color:var(--teal)}
+.chat-send{padding:8px 14px;background:var(--teal);border:none;border-radius:var(--r8);color:#001A14;font-weight:600;font-size:12px;cursor:pointer;flex-shrink:0}
+.quick-chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 10px}
+.chip{padding:4px 10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:20px;font-size:11px;color:var(--txt2);cursor:pointer;transition:all .2s}
+.chip:hover{border-color:var(--teal);color:var(--teal)}
+
+/* ── PFD ─────────────────────────────────────────────────────── */
+@keyframes flow{to{stroke-dashoffset:-20}}
+@keyframes flow-rev{to{stroke-dashoffset:20}}
+.flow-line{stroke-dasharray:8 4;animation:flow 1.2s linear infinite;stroke-width:2}
+.flow-line.rev{animation:flow-rev 1.2s linear infinite}
+.flow-line.slow{animation-duration:2.5s}
+.flow-line.fast{animation-duration:.7s}
+.pfd-node{cursor:pointer;transition:opacity .15s}
+.pfd-node:hover{opacity:.8}
+
+/* ── SAFETY ─────────────────────────────────────────────────── */
+.safety-indicator{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--r8);border:1px solid}
+.safety-indicator.ok{background:var(--green-bg);border-color:rgba(16,185,129,.2)}
+.safety-indicator.warn{background:var(--amber-bg);border-color:rgba(245,158,11,.2)}
+.safety-indicator.alarm{background:var(--red-bg);border-color:rgba(239,68,68,.3)}
+.safety-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.safety-indicator.ok .safety-icon{background:rgba(16,185,129,.2);color:var(--green)}
+.safety-indicator.warn .safety-icon{background:rgba(245,158,11,.2);color:var(--amber)}
+.safety-indicator.alarm .safety-icon{background:rgba(239,68,68,.2);color:var(--red)}
+.safety-text{flex:1}
+.safety-name{font-size:13px;font-weight:500;margin-bottom:2px}
+.safety-val{font-family:var(--mono);font-size:12px;color:var(--txt2)}
+.esd-panel{background:var(--red-bg);border:1px solid rgba(239,68,68,.3);border-radius:var(--r12);padding:16px 18px}
+.esd-title{font-size:13px;font-weight:600;color:var(--red);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.esd-sub{font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:12px}
+.esd-btn{padding:10px 20px;background:var(--red);border:none;border-radius:var(--r8);color:#fff;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.04em}
+
+/* ── PROGRESS BARS ───────────────────────────────────────────── */
+.progress-bar-wrap{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:3px;transition:width .8s ease}
+
+/* ── LOG AREA ────────────────────────────────────────────────── */
+.log-area{background:var(--bg0);border:1px solid var(--bdr);border-radius:var(--r8);padding:12px;font-family:var(--mono);font-size:11px;line-height:1.8;max-height:200px;overflow-y:auto;color:var(--txt2)}
+
+/* ── DIVIDER ─────────────────────────────────────────────────── */
+.divider{height:1px;background:var(--bdr);margin:16px 0}
+
+/* ── UPTIME COUNTER ──────────────────────────────────────────── */
+.uptime{font-family:var(--mono);font-size:11px;color:var(--txt3)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- LOGIN                                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="login">
+  <div class="login-bg"></div>
+  <div class="login-grid"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 22 22" fill="none" stroke="#001A14" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="9"/><path d="M7 11h8M11 7v8"/><circle cx="11" cy="11" r="3" fill="#001A14"/>
+        </svg>
+      </div>
+      <div>
+        <div class="login-brand">AquaH<span>₂</span> Control</div>
+        <div class="login-sub">AI-SCADA Platform · Kraefegg M.O.</div>
+      </div>
+    </div>
+    <div class="login-warning">
+      ⚠ Acesso restrito a operadores autorizados. Todas as sessões são registradas e auditadas em conformidade com IEC 62443.
+    </div>
+    <label class="login-label">Usuário</label>
+    <input class="login-field" type="text" id="login-user" value="railson.kraefegg" autocomplete="username">
+    <label class="login-label">Senha</label>
+    <input class="login-field" type="password" id="login-pass" value="AquaH2@2026" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">ACESSAR SISTEMA</button>
+    <div class="login-footer">
+      Rev. 2.1.4 · Kraefegg M.O. · Developer: Railson<br>
+      Certificado IEC 62443-3-3 · ISO 27001
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- APP SHELL                                                    -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-logo">
+      <div class="hdr-logo-icon"><svg viewBox="0 0 16 16" fill="none" stroke="#001A14" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 8h5M8 5.5v5"/><circle cx="8" cy="8" r="2" fill="#001A14"/></svg></div>
+      <div class="hdr-brand">AquaH<span>₂</span></div>
+    </div>
+    <div class="hdr-plant">
+      <div class="hdr-dot" id="hdr-dot"></div>
+      <div>
+        <div class="hdr-plant-name">Planta Nordeste · Hub RN-01</div>
+        <div class="hdr-plant-status" id="hdr-status">Operação normal · Modo automático IA</div>
+      </div>
+    </div>
+    <div class="hdr-metrics">
+      <div class="hdr-metric"><span class="hdr-metric-label">H₂ Produção</span><span class="hdr-metric-val ok" id="h-h2">19.9 kg/h</span></div>
+      <div class="hdr-metric"><span class="hdr-metric-label">Energia Total</span><span class="hdr-metric-val info" id="h-pwr">38.5 MW</span></div>
+      <div class="hdr-metric"><span class="hdr-metric-label">Eficiência PEM</span><span class="hdr-metric-val" id="h-eff">71.4%</span></div>
+      <div class="hdr-metric"><span class="hdr-metric-label">Água SWRO</span><span class="hdr-metric-val info" id="h-water">3.47 m³/min</span></div>
+      <div class="hdr-metric"><span class="hdr-metric-label">BESS SoC</span><span class="hdr-metric-val ok" id="h-bess">82%</span></div>
+      <div class="hdr-metric"><span class="hdr-metric-label">NH₃ Tanque</span><span class="hdr-metric-val" id="h-nh3">48%</span></div>
+    </div>
+    <div class="hdr-right">
+      <span class="hdr-clock" id="clock">--:--:--</span>
+      <div class="hdr-alarm-btn" id="alarm-btn" onclick="nav('alarms')">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a6 6 0 00-6 6v3l-1 1v1h14v-1l-1-1V7a6 6 0 00-6-6zm0 14a2 2 0 01-2-2h4a2 2 0 01-2 2z"/></svg>
+        <span id="alarm-count">2 Alarmes</span>
+      </div>
+      <div class="hdr-user">
+        <div class="hdr-avatar">RA</div>
+        <span class="hdr-username">Railson</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="app-body">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="nav-section-label">Principal</div>
+      <div class="nav-item active" onclick="nav('overview')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="nav('pfd')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="4" width="4" height="3" rx="1"/><rect x="6" y="1" width="4" height="3" rx="1"/><rect x="11" y="4" width="4" height="3" rx="1"/><rect x="6" y="10" width="4" height="5" rx="1"/><line x1="5" y1="5.5" x2="6" y2="5.5"/><line x1="10" y1="5.5" x2="11" y2="5.5"/><line x1="8" y1="4" x2="8" y2="5.5"/><line x1="8" y1="7" x2="8" y2="10"/></svg>
+        Diagrama de Processo
+      </div>
+
+      <div class="nav-section-label" style="margin-top:8px">Subsistemas</div>
+      <div class="nav-item" onclick="nav('electrolyzer')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3" width="12" height="10" rx="1"/><line x1="8" y1="1" x2="8" y2="3"/><line x1="5" y1="15" x2="5" y2="13"/><line x1="11" y1="15" x2="11" y2="13"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="8" y1="5" x2="8" y2="11"/></svg>
+        Eletrolisador PEM
+      </div>
+      <div class="nav-item" onclick="nav('swro')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><ellipse cx="8" cy="4" rx="6" ry="2.5"/><path d="M2 4v8a6 2.5 0 0012 0V4"/><line x1="8" y1="6.5" x2="8" y2="14.5"/></svg>
+        Dessalinização SWRO
+      </div>
+      <div class="nav-item" onclick="nav('energy')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><polygon points="9,1 1,9 7,9 7,15 15,7 9,7"/></svg>
+        Energia Solar + Eólica
+      </div>
+      <div class="nav-item" onclick="nav('h2storage')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="2" width="10" height="12" rx="2"/><line x1="6" y1="6" x2="10" y2="6"/><line x1="6" y1="9" x2="10" y2="9"/></svg>
+        Armazenamento H₂/NH₃
+      </div>
+
+      <div class="nav-section-label" style="margin-top:8px">Operação</div>
+      <div class="nav-item" onclick="nav('alarms')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a6 6 0 00-6 6v3l-1 1v1h14v-1l-1-1V7a6 6 0 00-6-6zm0 14a2 2 0 01-2-2h4a2 2 0 01-2 2z"/></svg>
+        Alarmes &amp; Eventos
+        <span class="nav-badge" id="nav-alarm-badge">2</span>
+      </div>
+      <div class="nav-item" onclick="nav('network')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="2"/><circle cx="2" cy="4" r="1.5"/><circle cx="14" cy="4" r="1.5"/><circle cx="2" cy="12" r="1.5"/><circle cx="14" cy="12" r="1.5"/><line x1="3.5" y1="4.7" x2="6.5" y2="6.8"/><line x1="12.5" y1="4.7" x2="9.5" y2="6.8"/><line x1="3.5" y1="11.3" x2="6.5" y2="9.2"/><line x1="12.5" y1="11.3" x2="9.5" y2="9.2"/></svg>
+        Rede IoT
+        <span class="nav-badge warn">!</span>
+      </div>
+      <div class="nav-item" onclick="nav('trends')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><polyline points="1,12 5,7 8,9 12,4 15,6"/><line x1="1" y1="14" x2="15" y2="14"/></svg>
+        Tendências Históricas
+      </div>
+      <div class="nav-item" onclick="nav('safety')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1L2 4v4c0 3.7 2.5 6.8 6 8 3.5-1.2 6-4.3 6-8V4z"/><line x1="6" y1="8" x2="7.5" y2="9.5"/><line x1="7.5" y1="9.5" x2="10" y2="6.5"/></svg>
+        Segurança &amp; ESD
+      </div>
+      <div class="nav-item" onclick="nav('ai')">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="4" width="10" height="8" rx="2"/><line x1="6" y1="7" x2="6" y2="7.5"/><line x1="8" y1="7" x2="8" y2="7.5"/><line x1="10" y1="7" x2="10" y2="7.5"/><line x1="8" y1="2" x2="8" y2="4"/></svg>
+        IA Operacional
+      </div>
+
+      <div class="sidebar-footer">
+        <div>Uptime: <span class="uptime" id="uptime-display">720h 14m</span></div>
+        <div style="margin-top:4px;font-size:10px">Rev. 2.1.4 · IEC 62443</div>
+      </div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content" id="content">
+
+      <!-- ══ SCREEN: OVERVIEW ══════════════════════════════════ -->
+      <div class="screen active" id="screen-overview">
+        <div class="screen-title">Dashboard Operacional</div>
+        <div class="screen-sub" id="ov-datetime">Atualizado em tempo real · Modo: Automático IA · Operador: Railson</div>
+
+        <!-- KPI row -->
+        <div class="g4 mb12">
+          <div class="kpi teal">
+            <div class="kpi-label">Produção H₂ Verde</div>
+            <div class="kpi-val" id="kpi-h2">19.9 <span style="font-size:13px;color:var(--txt2)">kg/h</span></div>
+            <div class="kpi-sub">Stack A: 10.4 · Stack B: 9.5 kg/h</div>
+            <div class="kpi-delta up" id="kpi-h2-delta">↑ +2.1% vs hora anterior</div>
+          </div>
+          <div class="kpi blue">
+            <div class="kpi-label">Potência Renovável</div>
+            <div class="kpi-val" id="kpi-pwr">38.5 <span style="font-size:13px;color:var(--txt2)">MW</span></div>
+            <div class="kpi-sub">Solar: 18.4 · Eólica: 20.1 MW</div>
+            <div class="kpi-delta neutral" id="kpi-pwr-delta">→ 77% capacidade instalada</div>
+          </div>
+          <div class="kpi green">
+            <div class="kpi-label">Água Dessalinizada</div>
+            <div class="kpi-val" id="kpi-water">5,000 <span style="font-size:13px;color:var(--txt2)">m³/dia</span></div>
+            <div class="kpi-sub">Salinidade saída: 0.32 g/L</div>
+            <div class="kpi-delta up">↑ Qualidade WHO aprovada</div>
+          </div>
+          <div class="kpi amber">
+            <div class="kpi-label">NH₃ Verde (acum. hoje)</div>
+            <div class="kpi-val" id="kpi-nh3">24.7 <span style="font-size:13px;color:var(--txt2)">t</span></div>
+            <div class="kpi-sub">Meta diária: 26.2 t · 94.3%</div>
+            <div class="kpi-delta warn" id="kpi-nh3-delta">↓ −2.1% vs meta</div>
+          </div>
+        </div>
+
+        <!-- Main row -->
+        <div class="g2 mb12">
+          <div class="card">
+            <div class="card-title">Geração de H₂ — Últimas 3 horas (Nm³/h)</div>
+            <div class="chart-wrap"><canvas id="chart-h2" height="120"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Balanço energético — MW</div>
+            <div class="chart-wrap"><canvas id="chart-energy-bal" height="120"></canvas></div>
+          </div>
+        </div>
+
+        <!-- System status -->
+        <div class="g3">
+          <div class="card">
+            <div class="card-title">Eletrolisador PEM</div>
+            <div style="display:flex;gap:16px;align-items:center">
+              <div class="ring-wrap">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="32" fill="none" stroke="var(--bg3)" stroke-width="7"/>
+                  <circle id="ring-eff" cx="40" cy="40" r="32" fill="none" stroke="var(--teal)" stroke-width="7" stroke-dasharray="201" stroke-dashoffset="57" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+                  <text x="40" y="37" text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="500" fill="var(--txt)"><tspan id="ring-eff-val">71.6</tspan></text>
+                  <text x="40" y="52" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="var(--txt2)">% LHV</text>
+                </svg>
+                <span class="ring-label">Eficiência</span>
+              </div>
+              <div style="flex:1">
+                <div class="sensor-table-mini" style="display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Stack A temp</span><span class="sval ok" id="ov-ta">72.3 °C</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Stack B temp</span><span class="sval warn" id="ov-tb">78.9 °C</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Pressão H₂</span><span class="sval" id="ov-press">31.4 bar</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Pureza</span><span class="sval ok">99.97%</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Status</span><span class="badge ok">Online</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Dessalinização SWRO</div>
+            <div style="display:flex;gap:16px;align-items:center">
+              <div class="ring-wrap">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="32" fill="none" stroke="var(--bg3)" stroke-width="7"/>
+                  <circle id="ring-swro" cx="40" cy="40" r="32" fill="none" stroke="var(--blue)" stroke-width="7" stroke-dasharray="201" stroke-dashoffset="70" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+                  <text x="40" y="37" text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="500" fill="var(--txt)">65</text>
+                  <text x="40" y="52" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="var(--txt2)">% cap.</text>
+                </svg>
+                <span class="ring-label">Capacidade</span>
+              </div>
+              <div style="flex:1">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Feed salinidade</span><span class="sval">35.2 g/L</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Produto salinidade</span><span class="sval ok">0.32 g/L</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Pressão membrana</span><span class="sval" id="ov-swro-press">62.1 bar</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Recuperação</span><span class="sval ok">40.0%</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Status</span><span class="badge ok">Online</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">BESS + Armazenamento</div>
+            <div style="display:flex;gap:16px;align-items:center">
+              <div class="ring-wrap">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="32" fill="none" stroke="var(--bg3)" stroke-width="7"/>
+                  <circle id="ring-bess" cx="40" cy="40" r="32" fill="none" stroke="var(--green)" stroke-width="7" stroke-dasharray="201" stroke-dashoffset="36" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+                  <text x="40" y="37" text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="500" fill="var(--txt)" id="ring-bess-val">82</text>
+                  <text x="40" y="52" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="var(--txt2)">% SoC</text>
+                </svg>
+                <span class="ring-label">BESS 20 MWh</span>
+              </div>
+              <div style="flex:1">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Energia armazenada</span><span class="sval ok" id="bess-kwh">16.4 MWh</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Potência BESS</span><span class="sval" id="bess-kw">0 kW</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Temperatura banco</span><span class="sval">28.4 °C</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Tanque H₂ comp.</span><span class="sval" id="ov-h2tank">48% · 2.4 t</span></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--txt2)">Status</span><span class="badge ok">Standby</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN: PFD ═══════════════════════════════════════ -->
+      <div class="screen" id="screen-pfd">
+        <div class="screen-title">Diagrama de Processo — AquaH₂ Hub</div>
+        <div class="screen-sub">P&ID simplificado com dados em tempo real · Clique nos equipamentos para detalhes</div>
+        <div class="net-container">
+          <svg class="net-svg" viewBox="0 0 900 480" id="pfd-svg">
+            <!-- Background grid -->
+            <defs>
+              <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,.03)" stroke-width="1"/></pattern>
+            </defs>
+            <rect width="900" height="480" fill="url(#grid)"/>
+
+            <!-- ── SEAWATER INTAKE ── -->
+            <g class="pfd-node" onclick="pfdClick('seawater')">
+              <rect x="10" y="195" width="80" height="50" rx="6" fill="#111D2E" stroke="#3B8FD4" stroke-width="1.5"/>
+              <text x="50" y="218" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="600" fill="#3B8FD4">Captação</text>
+              <text x="50" y="232" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="#5C7A9B">Água do Mar</text>
+              <text x="50" y="255" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5C7A9B">35.2 g/L</text>
+            </g>
+
+            <!-- Seawater line to SWRO -->
+            <line x1="90" y1="220" x2="160" y2="220" stroke="#3B8FD4" class="flow-line"/>
+            <text x="125" y="213" text-anchor="middle" font-family="var(--ui)" font-size="8" fill="#3B8FD4">12,500 m³/d</text>
+
+            <!-- ── SWRO ── -->
+            <g class="pfd-node" onclick="pfdClick('swro')">
+              <rect x="160" y="175" width="100" height="90" rx="8" fill="#0B1320" stroke="#3B8FD4" stroke-width="2"/>
+              <text x="210" y="200" text-anchor="middle" font-family="var(--ui)" font-size="11" font-weight="700" fill="#3B8FD4">SWRO</text>
+              <text x="210" y="214" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="#5C7A9B">Osmose Reversa</text>
+              <line x1="170" y1="225" x2="250" y2="225" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
+              <text x="210" y="238" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#3B8FD4">62.1 bar</text>
+              <text x="210" y="252" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5C7A9B">0.32 g/L out</text>
+            </g>
+
+            <!-- Brine to sea -->
+            <line x1="210" y1="265" x2="210" y2="310" stroke="#5C7A9B" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <text x="235" y="292" font-family="var(--ui)" font-size="8" fill="#5C7A9B">Rejeito</text>
+            <text x="235" y="303" font-family="var(--ui)" font-size="8" fill="#5C7A9B">7,500 m³/d</text>
+            <rect x="175" y="310" width="70" height="24" rx="4" fill="#162338" stroke="#3D4F6A" stroke-width="1"/>
+            <text x="210" y="326" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="#5C7A9B">Mar (difusor)</text>
+
+            <!-- Pure water to tank -->
+            <line x1="260" y1="220" x2="330" y2="220" stroke="#00C9A7" class="flow-line"/>
+            <text x="295" y="213" text-anchor="middle" font-family="var(--ui)" font-size="8" fill="#00C9A7">5,000 m³/d</text>
+
+            <!-- ── PURE WATER TANK ── -->
+            <g class="pfd-node" onclick="pfdClick('watertank')">
+              <ellipse cx="360" cy="205" rx="30" ry="10" fill="#0B1320" stroke="#00C9A7" stroke-width="1.5"/>
+              <rect x="330" y="205" width="60" height="50" fill="#0B1320" stroke="#00C9A7" stroke-width="1.5" stroke-top="none"/>
+              <ellipse cx="360" cy="255" rx="30" ry="10" fill="#111D2E" stroke="#00C9A7" stroke-width="1.5"/>
+              <text x="360" y="233" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="#00C9A7">H₂O Pura</text>
+              <text x="360" y="246" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5C7A9B">72%</text>
+            </g>
+
+            <!-- Water to Stack A -->
+            <line x1="390" y1="215" x2="460" y2="165" stroke="#00C9A7" class="flow-line"/>
+            <!-- Water to Stack B -->
+            <line x1="390" y1="235" x2="460" y2="285" stroke="#00C9A7" class="flow-line"/>
+
+            <!-- ── ELECTROLYZER STACK A ── -->
+            <g class="pfd-node" onclick="pfdClick('stackA')">
+              <rect x="460" y="120" width="110" height="90" rx="8" fill="#0B1320" stroke="#00C9A7" stroke-width="2"/>
+              <text x="515" y="148" text-anchor="middle" font-family="var(--ui)" font-size="11" font-weight="700" fill="#00C9A7">PEM Stack A</text>
+              <text x="515" y="161" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="#5C7A9B">25 MW · 350 células</text>
+              <line x1="470" y1="172" x2="560" y2="172" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+              <text x="515" y="184" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#00C9A7" id="pfd-ta">72.3°C · 31.2 bar</text>
+              <text x="515" y="197" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5C7A9B" id="pfd-ha">112 Nm³/h H₂</text>
+            </g>
+
+            <!-- ── ELECTROLYZER STACK B ── -->
+            <g class="pfd-node" onclick="pfdClick('stackB')">
+              <rect x="460" y="240" width="110" height="90" rx="8" fill="#0B1320" stroke="#F59E0B" stroke-width="2"/>
+              <text x="515" y="268" text-anchor="middle" font-family="var(--ui)" font-size="11" font-weight="700" fill="#F59E0B">PEM Stack B</text>
+              <text x="515" y="281" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="#5C7A9B">25 MW · 350 células</text>
+              <line x1="470" y1="292" x2="560" y2="292" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+              <text x="515" y="304" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#F59E0B" id="pfd-tb">78.9°C · 34.8 bar</text>
+              <text x="515" y="317" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5C7A9B" id="pfd-hb">109 Nm³/h H₂</text>
+            </g>
+
+            <!-- H2 from A to manifold -->
+            <line x1="570" y1="162" x2="650" y2="220" stroke="#00C9A7" class="flow-line fast"/>
+            <!-- H2 from B to manifold -->
+            <line x1="570" y1="282" x2="650" y2="230" stroke="#00C9A7" class="flow-line fast"/>
+
+            <!-- ── H2 MANIFOLD ── -->
+            <rect x="650" y="195" width="80" height="60" rx="6" fill="#0B1320" stroke="#00C9A7" stroke-width="1.5"/>
+            <text x="690" y="222" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="600" fill="#00C9A7">Manifold</text>
+            <text x="690" y="237" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5C7A9B" id="pfd-h2total">221 Nm³/h</text>
+            <text x="690" y="249" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5C7A9B">99.97% pureza</text>
+
+            <!-- H2 to compressor -->
+            <line x1="730" y1="225" x2="780" y2="225" stroke="#00C9A7" class="flow-line fast"/>
+
+            <!-- ── COMPRESSOR ── -->
+            <g class="pfd-node" onclick="pfdClick('compressor')">
+              <circle cx="810" cy="225" r="30" fill="#0B1320" stroke="#8B5CF6" stroke-width="2"/>
+              <text x="810" y="222" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="700" fill="#8B5CF6">COMP</text>
+              <text x="810" y="236" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5C7A9B">900 bar</text>
+            </g>
+
+            <!-- Compressor to storage -->
+            <line x1="810" y1="195" x2="810" y2="140" stroke="#8B5CF6" class="flow-line"/>
+
+            <!-- ── H2 STORAGE TANK ── -->
+            <g class="pfd-node" onclick="pfdClick('h2tank')">
+              <ellipse cx="810" cy="120" rx="35" ry="12" fill="#0B1320" stroke="#8B5CF6" stroke-width="1.5"/>
+              <rect x="775" y="108" width="70" height="42" fill="#0B1320" stroke="#8B5CF6" stroke-width="1.5"/>
+              <ellipse cx="810" cy="150" rx="35" ry="12" fill="#111D2E" stroke="#8B5CF6" stroke-width="1.5"/>
+              <text x="810" y="132" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="#8B5CF6">Tanque H₂</text>
+              <text x="810" y="145" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#5C7A9B" id="pfd-h2tank">48% · 2.4 t</text>
+            </g>
+
+            <!-- H2 to NH3 synthesis -->
+            <line x1="840" y1="225" x2="870" y2="340" stroke="#8B5CF6" class="flow-line slow"/>
+            <text x="880" y="295" font-family="var(--ui)" font-size="8" fill="#8B5CF6">H₂ → NH₃</text>
+
+            <!-- ── NH3 SYNTHESIS ── -->
+            <g class="pfd-node" onclick="pfdClick('nh3')">
+              <rect x="820" y="340" width="70" height="55" rx="8" fill="#0B1320" stroke="#8B5CF6" stroke-width="2"/>
+              <text x="855" y="362" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="600" fill="#8B5CF6">NH₃ Síntese</text>
+              <text x="855" y="374" text-anchor="middle" font-family="var(--ui)" font-size="8" fill="#5C7A9B">Haber-Bosch</text>
+              <text x="855" y="387" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="#5C7A9B" id="pfd-nh3rate">118 kg/h</text>
+            </g>
+
+            <!-- ── SOLAR ARRAY ── -->
+            <g class="pfd-node" onclick="pfdClick('solar')">
+              <rect x="10" y="380" width="90" height="55" rx="6" fill="#0B1320" stroke="#F59E0B" stroke-width="1.5"/>
+              <text x="55" y="403" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="600" fill="#F59E0B">Solar PV</text>
+              <text x="55" y="416" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="#5C7A9B">25 MWp</text>
+              <text x="55" y="428" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#F59E0B" id="pfd-solar">18.4 MW</text>
+            </g>
+
+            <!-- ── WIND FARM ── -->
+            <g class="pfd-node" onclick="pfdClick('wind')">
+              <rect x="120" y="380" width="90" height="55" rx="6" fill="#0B1320" stroke="#3B8FD4" stroke-width="1.5"/>
+              <text x="165" y="403" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="600" fill="#3B8FD4">Eólica</text>
+              <text x="165" y="416" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="#5C7A9B">25 MW inst.</text>
+              <text x="165" y="428" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#3B8FD4" id="pfd-wind">20.1 MW</text>
+            </g>
+
+            <!-- Solar + Wind to EMS -->
+            <line x1="100" y1="407" x2="250" y2="407" stroke="#F59E0B" class="flow-line slow"/>
+            <line x1="210" y1="407" x2="250" y2="407" stroke="#3B8FD4" class="flow-line slow"/>
+
+            <!-- ── EMS / POWER CONDITIONING ── -->
+            <g class="pfd-node" onclick="pfdClick('ems')">
+              <rect x="250" y="378" width="110" height="58" rx="8" fill="#0B1320" stroke="#10B981" stroke-width="2"/>
+              <text x="305" y="402" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="700" fill="#10B981">EMS / SGE</text>
+              <text x="305" y="415" text-anchor="middle" font-family="var(--ui)" font-size="8" fill="#5C7A9B">Condicionamento</text>
+              <text x="305" y="428" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#10B981" id="pfd-total-pwr">38.5 MW total</text>
+            </g>
+
+            <!-- ── BESS ── -->
+            <g class="pfd-node" onclick="pfdClick('bess')">
+              <rect x="380" y="378" width="80" height="58" rx="6" fill="#0B1320" stroke="#10B981" stroke-width="1.5"/>
+              <text x="420" y="400" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="600" fill="#10B981">BESS</text>
+              <text x="420" y="413" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="#5C7A9B">20 MWh Li-ion</text>
+              <text x="420" y="426" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#10B981" id="pfd-bess">82% SoC</text>
+            </g>
+
+            <!-- EMS to BESS -->
+            <line x1="360" y1="407" x2="380" y2="407" stroke="#10B981" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+            <!-- EMS to Electrolyzer (power DC bus) -->
+            <line x1="305" y1="378" x2="490" y2="210" stroke="#10B981" class="flow-line slow"/>
+
+            <!-- Legend -->
+            <rect x="10" y="10" width="300" height="75" rx="6" fill="rgba(5,8,15,.8)"/>
+            <text x="20" y="28" font-family="var(--ui)" font-size="10" font-weight="600" fill="var(--txt)">Legenda</text>
+            <line x1="20" y1="40" x2="50" y2="40" stroke="#3B8FD4" stroke-width="2" stroke-dasharray="6 3"/><text x="55" y="44" font-family="var(--ui)" font-size="9" fill="#5C7A9B">Água do mar</text>
+            <line x1="20" y1="54" x2="50" y2="54" stroke="#00C9A7" stroke-width="2" stroke-dasharray="6 3"/><text x="55" y="58" font-family="var(--ui)" font-size="9" fill="#5C7A9B">Hidrogênio / H₂O pura</text>
+            <line x1="20" y1="68" x2="50" y2="68" stroke="#F59E0B" stroke-width="2" stroke-dasharray="6 3"/><text x="55" y="72" font-family="var(--ui)" font-size="9" fill="#5C7A9B">Energia elétrica DC</text>
+            <line x1="150" y1="54" x2="180" y2="54" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="6 3"/><text x="185" y="58" font-family="var(--ui)" font-size="9" fill="#5C7A9B">NH₃ verde</text>
+            <line x1="150" y1="68" x2="180" y2="68" stroke="#10B981" stroke-width="2" stroke-dasharray="6 3"/><text x="185" y="72" font-family="var(--ui)" font-size="9" fill="#5C7A9B">Gestão energética</text>
+
+            <!-- PFD info overlay -->
+            <rect x="630" y="10" width="260" height="50" rx="6" fill="rgba(5,8,15,.8)"/>
+            <text x="640" y="28" font-family="var(--ui)" font-size="10" font-weight="600" fill="var(--txt)">AquaH₂ Hub · RN-01 · Fase 1 · 50 MW</text>
+            <text x="640" y="42" font-family="var(--ui)" font-size="9" fill="#5C7A9B">P&amp;ID simplificado · Rev.A · Kraefegg M.O. · Railson</text>
+          </svg>
+          <div class="net-legend" id="pfd-info-bar">Clique em qualquer equipamento para ver dados detalhados em tempo real.</div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN: ELECTROLYZER ══════════════════════════════ -->
+      <div class="screen" id="screen-electrolyzer">
+        <div class="screen-title">Eletrolisador PEM — Detalhes</div>
+        <div class="screen-sub">2 stacks · 50 MW total · Célula PEM Proton Exchange Membrane</div>
+        <div class="g2 mb12">
+          <div class="card">
+            <div class="card-title">Stack A — 25 MW <span class="badge ok" style="margin-left:8px">Online</span></div>
+            <table class="sensor-table">
+              <tr><th>Parâmetro</th><th>Valor</th><th>Limite</th><th>Barra</th><th>Status</th></tr>
+              <tr><td>Temperatura célula</td><td><span class="sval ok" id="elec-a-temp">72.3 °C</span></td><td style="color:var(--txt3)">60–80°C</td><td><div class="sbar-wrap"><div class="sbar" id="elecbar-a-temp" style="width:72%;background:var(--teal)"></div></div></td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Pressão H₂ (diferencial)</td><td><span class="sval" id="elec-a-press">31.2 bar</span></td><td style="color:var(--txt3)">&lt; 35 bar</td><td><div class="sbar-wrap"><div class="sbar" id="elecbar-a-press" style="width:63%;background:var(--blue)"></div></div></td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Corrente DC total</td><td><span class="sval" id="elec-a-curr">4820 A</span></td><td style="color:var(--txt3)">&lt; 6000 A</td><td><div class="sbar-wrap"><div class="sbar" id="elecbar-a-curr" style="width:80%;background:var(--amber)"></div></div></td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Tensão média célula</td><td><span class="sval" id="elec-a-volt">1.89 V</span></td><td style="color:var(--txt3)">1.8–2.1 V</td><td><div class="sbar-wrap"><div class="sbar" style="width:50%;background:var(--teal)"></div></div></td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Fluxo H₂O entrada</td><td><span class="sval" id="elec-a-flow">22.1 L/min</span></td><td style="color:var(--txt3)">15–40 L/min</td><td><div class="sbar-wrap"><div class="sbar" id="elecbar-a-flow" style="width:55%;background:var(--teal)"></div></div></td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Produção H₂ Stack A</td><td><span class="sval ok" id="elec-a-h2">112 Nm³/h</span></td><td style="color:var(--txt3)">Alvo: 115</td><td><div class="sbar-wrap"><div class="sbar" style="width:97%;background:var(--green)"></div></div></td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Pureza H₂</td><td><span class="sval ok">99.97%</span></td><td style="color:var(--txt3)">&gt; 99.9%</td><td><div class="sbar-wrap"><div class="sbar" style="width:100%;background:var(--green)"></div></div></td><td><span class="badge ok">OK</span></td></tr>
+              <tr><td>Energia específica</td><td><span class="sval">4.82 kWh/Nm³</span></td><td style="color:var(--txt3)">&lt; 5.5 kWh/Nm³</td><td><div class="sbar-wrap"><div class="sbar" style="width:66%;background:var(--teal)"></div></div></td><td><span class="badge ok">Eficiente</span></td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-title">Stack B — 25 MW <span class="badge warn" style="margin-left:8px">Atenção</span></div>
+            <table class="sensor-table">
+              <tr><th>Parâmetro</th><th>Valor</th><th>Limite</th><th>Barra</th><th>Status</th></tr>
+              <tr><td>Temperatura célula</td><td><span class="sval warn" id="elec-b-temp">78.9 °C</span></td><td style="color:var(--txt3)">60–80°C</td><td><div class="sbar-wrap"><div class="sbar" id="elecbar-b-temp" style="width:79%;background:var(--amber)"></div></div></td><td><span class="badge warn">Atenção</span></td></tr>
+              <tr><td>Pressão H₂ (diferencial)</td><td><span class="sval warn" id="elec-b-press">34.8 bar</span></td><td style="color:var(--txt3)">&lt; 35 bar</td><td><div class="sbar-wrap"><div class="sbar" id="elecbar-b-press" style="width:70%;background:var(--amber)"></div></div></td><td><span class="badge warn">Alto</span></td></tr>
+              <tr><td>Corrente DC total</td><td><span class="sval" id="elec-b-curr">4710 A</span></td><td style="color:var(--txt3)">&lt; 6000 A</td><td><div class="sbar-wrap"><div class="sbar" id="elecbar-b-curr" style="width:78%;background:var(--amber)"></div></div></td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Tensão média célula</td><td><span class="sval" id="elec-b-volt">1.91 V</span></td><td style="color:var(--txt3)">1.8–2.1 V</td><td><div class="sbar-wrap"><div class="sbar" style="width:55%;background:var(--teal)"></div></div></td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Fluxo H₂O entrada</td><td><span class="sval" id="elec-b-flow">21.8 L/min</span></td><td style="color:var(--txt3)">15–40 L/min</td><td><div class="sbar-wrap"><div class="sbar" id="elecbar-b-flow" style="width:54%;background:var(--teal)"></div></div></td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Produção H₂ Stack B</td><td><span class="sval ok" id="elec-b-h2">109 Nm³/h</span></td><td style="color:var(--txt3)">Alvo: 115</td><td><div class="sbar-wrap"><div class="sbar" style="width:95%;background:var(--green)"></div></div></td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Pureza H₂</td><td><span class="sval ok">99.95%</span></td><td style="color:var(--txt3)">&gt; 99.9%</td><td><div class="sbar-wrap"><div class="sbar" style="width:99%;background:var(--green)"></div></div></td><td><span class="badge ok">OK</span></td></tr>
+              <tr><td>Energia específica</td><td><span class="sval">4.88 kWh/Nm³</span></td><td style="color:var(--txt3)">&lt; 5.5 kWh/Nm³</td><td><div class="sbar-wrap"><div class="sbar" style="width:68%;background:var(--teal)"></div></div></td><td><span class="badge ok">Eficiente</span></td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-title">Controle de Setpoint — Eletrolisador</div>
+            <div class="ctrl-group">
+              <div class="ctrl-row"><span class="ctrl-label">Potência Stack A (%)</span><input type="range" class="ctrl-slider" min="30" max="100" value="86" id="ctrl-pwr-a" oninput="updCtrl(this,'ctrl-pwr-a-v','%')"><span class="ctrl-val" id="ctrl-pwr-a-v">86%</span></div>
+              <div class="ctrl-row"><span class="ctrl-label">Potência Stack B (%)</span><input type="range" class="ctrl-slider" min="30" max="100" value="84" id="ctrl-pwr-b" oninput="updCtrl(this,'ctrl-pwr-b-v','%')"><span class="ctrl-val" id="ctrl-pwr-b-v">84%</span></div>
+              <div class="ctrl-row"><span class="ctrl-label">Fluxo H₂O A (L/min)</span><input type="range" class="ctrl-slider" min="10" max="40" value="22" id="ctrl-flow-a" step="1" oninput="updCtrl(this,'ctrl-flow-a-v',' L/min')"><span class="ctrl-val" id="ctrl-flow-a-v">22 L/min</span></div>
+              <div class="ctrl-row"><span class="ctrl-label">Fluxo H₂O B (L/min)</span><input type="range" class="ctrl-slider" min="10" max="40" value="22" id="ctrl-flow-b" step="1" oninput="updCtrl(this,'ctrl-flow-b-v',' L/min')"><span class="ctrl-val" id="ctrl-flow-b-v">22 L/min</span></div>
+              <div class="ctrl-row"><span class="ctrl-label">Pressão alvo H₂ (bar)</span><input type="range" class="ctrl-slider" min="20" max="35" value="32" id="ctrl-press-t" step="1" oninput="updCtrl(this,'ctrl-press-t-v',' bar')"><span class="ctrl-val" id="ctrl-press-t-v">32 bar</span></div>
+              <div class="divider"></div>
+              <div class="ctrl-group">
+                <div class="toggle-wrap"><span class="toggle-label">Stack A — habilitado</span><div class="toggle on" id="tog-stacka" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+                <div class="toggle-wrap"><span class="toggle-label">Stack B — habilitado</span><div class="toggle on" id="tog-stackb" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+                <div class="toggle-wrap"><span class="toggle-label">Modo automático IA</span><div class="toggle on" id="tog-ai-elec" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+              </div>
+              <div class="btn-row" style="margin-top:8px">
+                <button class="btn-primary">Aplicar Setpoints</button>
+                <button class="btn-secondary">Resetar para Auto</button>
+                <button class="btn-danger">Parada de Emergência</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Tendência — Temperatura Stacks (°C)</div>
+            <div class="chart-wrap"><canvas id="chart-temp" height="150"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN: SWRO ══════════════════════════════════════ -->
+      <div class="screen" id="screen-swro">
+        <div class="screen-title">Dessalinização SWRO</div>
+        <div class="screen-sub">Seawater Reverse Osmosis · 5.000 m³/dia capacidade fase 1 · Taxa recuperação: 40%</div>
+        <div class="g4 mb12">
+          <div class="kpi blue"><div class="kpi-label">Feed salinidade</div><div class="kpi-val">35.2 <span style="font-size:13px;color:var(--txt2)">g/L</span></div><div class="kpi-sub">NaCl equiv. · Entrada SWRO</div></div>
+          <div class="kpi teal"><div class="kpi-label">Produto salinidade</div><div class="kpi-val ok">0.32 <span style="font-size:13px;color:var(--txt2)">g/L</span></div><div class="kpi-sub">WHO limite: 0.5 g/L ✓</div></div>
+          <div class="kpi green"><div class="kpi-label">Produção</div><div class="kpi-val">3.47 <span style="font-size:13px;color:var(--txt2)">m³/min</span></div><div class="kpi-sub">5.000 m³/dia · 40% recuperação</div></div>
+          <div class="kpi amber"><div class="kpi-label">Energia específica</div><div class="kpi-val">3.4 <span style="font-size:13px;color:var(--txt2)">kWh/m³</span></div><div class="kpi-sub">ERD ativo · Abaixo da meta 3.5</div></div>
+        </div>
+        <div class="g2 mb12">
+          <div class="card">
+            <div class="card-title">Sensores de Processo — SWRO</div>
+            <table class="sensor-table">
+              <tr><th>Sensor</th><th>Valor Atual</th><th>Limite</th><th>Status</th></tr>
+              <tr><td>Pressão feed (entrada HP pump)</td><td><span class="sval" id="swro-feed-press">62.1 bar</span></td><td style="color:var(--txt3)">55–70 bar</td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>Pressão concentrado (brine)</td><td><span class="sval">60.8 bar</span></td><td style="color:var(--txt3)">&lt;62 bar</td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>SDI (Silt Density Index)</td><td><span class="sval ok">2.8</span></td><td style="color:var(--txt3)">&lt; 3.0</td><td><span class="badge ok">OK</span></td></tr>
+              <tr><td>Temperatura da água</td><td><span class="sval" id="swro-temp">26.8 °C</span></td><td style="color:var(--txt3)">15–35°C</td><td><span class="badge ok">Normal</span></td></tr>
+              <tr><td>pH produto</td><td><span class="sval ok">7.2</span></td><td style="color:var(--txt3)">6.5–8.5</td><td><span class="badge ok">OK</span></td></tr>
+              <tr><td>Condutividade produto</td><td><span class="sval ok">640 µS/cm</span></td><td style="color:var(--txt3)">&lt; 1000 µS</td><td><span class="badge ok">OK</span></td></tr>
+              <tr><td>Turbidez produto</td><td><span class="sval ok">0.08 NTU</span></td><td style="color:var(--txt3)">&lt; 1 NTU</td><td><span class="badge ok">OK</span></td></tr>
+              <tr><td>Índice de Langelier (LSI)</td><td><span class="sval">−0.4</span></td><td style="color:var(--txt3)">−0.5 a 0</td><td><span class="badge ok">Estável</span></td></tr>
+              <tr><td>Cloro residual</td><td><span class="sval ok">0.0 mg/L</span></td><td style="color:var(--txt3)">≤0.1 mg/L (RO)</td><td><span class="badge ok">OK</span></td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-title">Status das Membranas — 6 Vasos de Pressão</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:grid;grid-template-columns:80px 1fr 80px 60px;gap:8px;align-items:center;font-size:11px;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--txt2)">Vaso PV-01</span><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:18%;background:var(--green)"></div></div><span class="sval ok">Fouling: 18%</span><span class="badge ok">OK</span></div>
+              <div style="display:grid;grid-template-columns:80px 1fr 80px 60px;gap:8px;align-items:center;font-size:11px;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--txt2)">Vaso PV-02</span><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:22%;background:var(--green)"></div></div><span class="sval ok">Fouling: 22%</span><span class="badge ok">OK</span></div>
+              <div style="display:grid;grid-template-columns:80px 1fr 80px 60px;gap:8px;align-items:center;font-size:11px;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--txt2)">Vaso PV-03</span><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:41%;background:var(--amber)"></div></div><span class="sval warn">Fouling: 41%</span><span class="badge warn">Atenção</span></div>
+              <div style="display:grid;grid-template-columns:80px 1fr 80px 60px;gap:8px;align-items:center;font-size:11px;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--txt2)">Vaso PV-04</span><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:15%;background:var(--green)"></div></div><span class="sval ok">Fouling: 15%</span><span class="badge ok">OK</span></div>
+              <div style="display:grid;grid-template-columns:80px 1fr 80px 60px;gap:8px;align-items:center;font-size:11px;padding:6px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--txt2)">Vaso PV-05</span><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:29%;background:var(--green)"></div></div><span class="sval ok">Fouling: 29%</span><span class="badge ok">OK</span></div>
+              <div style="display:grid;grid-template-columns:80px 1fr 80px 60px;gap:8px;align-items:center;font-size:11px;padding:6px 0"><span style="color:var(--txt2)">Vaso PV-06</span><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:19%;background:var(--green)"></div></div><span class="sval ok">Fouling: 19%</span><span class="badge ok">OK</span></div>
+            </div>
+            <div style="margin-top:12px;padding:10px 12px;background:var(--amber-bg);border:1px solid rgba(245,158,11,.2);border-radius:var(--r8);font-size:11px;color:var(--amber)">
+              IA preditiva: PV-03 atingirá 50% de fouling em 14 dias. Limpagem CIP agendada para 05/04/2026 (janela de manutenção noturna).
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Vazão SWRO — Últimas 6 horas (m³/h)</div>
+          <div class="chart-wrap"><canvas id="chart-swro-flow" height="100"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN: ENERGY ════════════════════════════════════ -->
+      <div class="screen" id="screen-energy">
+        <div class="screen-title">Gestão de Energia — Solar + Eólica + BESS</div>
+        <div class="screen-sub">Sistema híbrido 50 MW · EMS ISO 50001 · Gestão em tempo real</div>
+        <div class="g4 mb12">
+          <div class="kpi amber"><div class="kpi-label">Solar PV</div><div class="kpi-val" id="en-solar">18.4 <span style="font-size:13px;color:var(--txt2)">MW</span></div><div class="kpi-sub">Irradiância: 842 W/m² · 25 MWp inst.</div></div>
+          <div class="kpi blue"><div class="kpi-label">Eólica Offshore</div><div class="kpi-val" id="en-wind">20.1 <span style="font-size:13px;color:var(--txt2)">MW</span></div><div class="kpi-sub">Vento: 9.4 m/s · 10 turbinas 2.5MW</div></div>
+          <div class="kpi green"><div class="kpi-label">BESS SoC</div><div class="kpi-val" id="en-bess">82 <span style="font-size:13px;color:var(--txt2)">%</span></div><div class="kpi-sub">16.4 MWh armazenado · 20 MWh cap.</div></div>
+          <div class="kpi teal"><div class="kpi-label">Fator Capacidade</div><div class="kpi-val">77 <span style="font-size:13px;color:var(--txt2)">%</span></div><div class="kpi-sub">P50 anual: 55% eólica · 28% solar</div></div>
+        </div>
+        <div class="g2 mb12">
+          <div class="card">
+            <div class="card-title">Geração Solar e Eólica — Hoje (MW)</div>
+            <div class="chart-wrap"><canvas id="chart-gen" height="140"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Carga do BESS — Hoje (%)</div>
+            <div class="chart-wrap"><canvas id="chart-bess" height="140"></canvas></div>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="card">
+            <div class="card-title">Solar PV — Detalhes</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Irradiância (POA)</span><span class="sval" id="en-irr">842 W/m²</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Temperatura módulo</span><span class="sval">58.4 °C</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">PR (Performance Ratio)</span><span class="sval ok">0.82</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Inversores online</span><span class="sval ok">48/50</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Alarmes PV</span><span class="sval ok">0</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Geração acum. hoje</span><span class="sval">128 MWh</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Eólica — Detalhes</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Velocidade do vento (hub)</span><span class="sval" id="en-wspd">9.4 m/s</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Direção do vento</span><span class="sval">NNE · 22°</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Turbinas online</span><span class="sval ok">10/10</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Fator de carga atual</span><span class="sval ok">80.4%</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Densidade de potência</span><span class="sval">0.63 kW/m²</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Geração acum. hoje</span><span class="sval">136 MWh</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">BESS — Li-ion 20 MWh</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Estado de carga (SoC)</span><span class="sval ok" id="en-bess-soc">82%</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Potência ativa</span><span class="sval">0 kW (standby)</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Temperatura banco</span><span class="sval ok">28.4 °C</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Ciclos acumulados</span><span class="sval">412</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">SoH (Estado de saúde)</span><span class="sval ok">96.2%</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Próx. manutenção</span><span class="sval">180 dias</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN: H2 STORAGE ════════════════════════════════ -->
+      <div class="screen" id="screen-h2storage">
+        <div class="screen-title">Armazenamento H₂ e NH₃</div>
+        <div class="screen-sub">Compressão · Tanques de alta pressão · Síntese de amônia verde · Exportação</div>
+        <div class="g2 mb12">
+          <div class="card">
+            <div class="card-title">Tanque H₂ Comprimido — 900 bar</div>
+            <div style="display:flex;gap:20px;align-items:center;margin-bottom:12px">
+              <svg width="80" height="120" viewBox="0 0 80 120"><ellipse cx="40" cy="18" rx="30" ry="10" fill="var(--bg2)" stroke="var(--purple)" stroke-width="1.5"/><rect x="10" y="18" width="60" height="84" fill="var(--bg2)" stroke="var(--purple)" stroke-width="1.5"/><rect x="11" y="60" width="58" height="42" rx="0" fill="rgba(139,92,246,.2)"/><ellipse cx="40" cy="102" rx="30" ry="10" fill="var(--bg2)" stroke="var(--purple)" stroke-width="1.5"/><text x="40" y="85" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--purple)">48%</text><text x="40" y="98" text-anchor="middle" font-family="var(--ui)" font-size="8" fill="var(--txt2)">2.4 t H₂</text></svg>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;font-size:12px">
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Nível tanque</span><span class="sval">48% · 2.4 t</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Pressão interna</span><span class="sval ok">874 bar</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Temperatura</span><span class="sval ok">22.1 °C</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Taxa de enchimento</span><span class="sval ok">+221 Nm³/h</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Taxa de consumo (NH₃)</span><span class="sval">−118 Nm³/h</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Balanço líquido</span><span class="sval ok">+103 Nm³/h</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Capacidade máxima</span><span class="sval">5.0 t H₂</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Status compressor</span><span class="badge ok">Online</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Tanque NH₃ Verde — Armazenamento Criogênico</div>
+            <div style="display:flex;gap:20px;align-items:center;margin-bottom:12px">
+              <svg width="80" height="120" viewBox="0 0 80 120"><ellipse cx="40" cy="18" rx="30" ry="10" fill="var(--bg2)" stroke="var(--purple)" stroke-width="1.5"/><rect x="10" y="18" width="60" height="84" fill="var(--bg2)" stroke="var(--purple)" stroke-width="1.5"/><rect x="11" y="60" width="58" height="42" rx="0" fill="rgba(139,92,246,.15)"/><ellipse cx="40" cy="102" rx="30" ry="10" fill="var(--bg2)" stroke="var(--purple)" stroke-width="1.5"/><text x="40" y="85" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--purple)">41%</text><text x="40" y="98" text-anchor="middle" font-family="var(--ui)" font-size="8" fill="var(--txt2)">246 t NH₃</text></svg>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;font-size:12px">
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Nível tanque</span><span class="sval">41% · 246 t</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Temperatura (criogênico)</span><span class="sval ok">−33.2 °C</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Pressão tanque</span><span class="sval ok">1.02 bar</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Taxa de produção</span><span class="sval ok">+118 kg/h</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Capacidade total</span><span class="sval">600 t NH₃</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Próximo carregamento</span><span class="sval">Em 12 dias</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Destino exportação</span><span class="sval info">Porto de Açu → Rotterdam</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Status síntese NH₃</span><span class="badge ok">Online</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Síntese NH₃ — Processo Haber-Bosch</div>
+          <div class="g4">
+            <div><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Temperatura reator</div><div class="sval" style="font-size:16px">425 °C</div><div style="font-size:10px;color:var(--txt3)">Alvo: 400–500°C</div></div>
+            <div><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Pressão reator</div><div class="sval" style="font-size:16px">180 bar</div><div style="font-size:10px;color:var(--txt3)">Nominal: 150–200 bar</div></div>
+            <div><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Taxa de conversão</div><div class="sval ok" style="font-size:16px">22.4%</div><div style="font-size:10px;color:var(--txt3)">Típico: 15–25% por passe</div></div>
+            <div><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Produção NH₃</div><div class="sval ok" style="font-size:16px">118 kg/h</div><div style="font-size:10px;color:var(--txt3)">Alvo: 125 kg/h</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN: ALARMS ════════════════════════════════════ -->
+      <div class="screen" id="screen-alarms">
+        <div class="screen-title">Alarmes e Eventos</div>
+        <div class="screen-sub">Sistema de alarme IEC 62682 · 2 alarmes ativos · 0 críticos</div>
+        <div class="g3 mb12">
+          <div class="kpi amber"><div class="kpi-label">Alarmes ativos</div><div class="kpi-val warn">2</div><div class="kpi-sub">0 críticos · 2 avisos</div></div>
+          <div class="kpi green"><div class="kpi-label">Alarmes confirmados</div><div class="kpi-val ok">0</div><div class="kpi-sub">Pendentes de confirmação</div></div>
+          <div class="kpi blue"><div class="kpi-label">Eventos hoje</div><div class="kpi-val">18</div><div class="kpi-sub">14 info · 4 avisos</div></div>
+        </div>
+        <div class="card mb12">
+          <div class="card-title">Alarmes Ativos</div>
+          <div id="active-alarms">
+            <div class="alarm-row">
+              <div class="alarm-dot warn"></div>
+              <div class="alarm-content">
+                <div class="alarm-title">Stack B — Temperatura Elevada [ALM-0042]</div>
+                <div class="alarm-detail">Temperatura atual: 78.9°C · Limite de aviso: 78°C · Limite de alarme: 82°C<br>Recomendação IA: Reduzir fluxo de H₂O em 8% por 15 min para normalizar.</div>
+              </div>
+              <div class="alarm-meta"><span class="alarm-time">14:23:18</span><button class="alarm-ack" onclick="ackAlarm(this)">Confirmar</button></div>
+            </div>
+            <div class="alarm-row">
+              <div class="alarm-dot warn"></div>
+              <div class="alarm-content">
+                <div class="alarm-title">Nó WiFi W-03 — Latência Alta [NET-0007]</div>
+                <div class="alarm-detail">Latência: 148ms · Limite: 100ms · Setor: Norte (sensores S-01, S-02)<br>Dados dos sensores ainda recebidos via rota alternativa (W-01). Sem impacto na produção.</div>
+              </div>
+              <div class="alarm-meta"><span class="alarm-time">14:19:04</span><button class="alarm-ack" onclick="ackAlarm(this)">Confirmar</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Histórico de Eventos — Últimas 4 horas</div>
+          <div id="event-log" style="display:flex;flex-direction:column">
+            <div class="alarm-row"><div class="alarm-dot info"></div><div class="alarm-content"><div class="alarm-title" style="font-weight:400;color:var(--txt2)">[INFO] IA ajustou fluxo Stack A: 22.1 → 21.4 L/min (otimização eficiência)</div></div><div class="alarm-meta"><span class="alarm-time">14:01:33</span></div></div>
+            <div class="alarm-row"><div class="alarm-dot ok"></div><div class="alarm-content"><div class="alarm-title" style="font-weight:400;color:var(--txt2)">[OK] BESS transição standby → carga completa (vento acima P50)</div></div><div class="alarm-meta"><span class="alarm-time">13:48:12</span></div></div>
+            <div class="alarm-row"><div class="alarm-dot info"></div><div class="alarm-content"><div class="alarm-title" style="font-weight:400;color:var(--txt2)">[INFO] SWRO PV-03 fouling index: 38% → 41% (agendamento CIP atualizado)</div></div><div class="alarm-meta"><span class="alarm-time">13:30:00</span></div></div>
+            <div class="alarm-row"><div class="alarm-dot ok"></div><div class="alarm-content"><div class="alarm-title" style="font-weight:400;color:var(--txt2)">[OK] Produção NH₃: meta diária 40% atingida (10:00h)</div></div><div class="alarm-meta"><span class="alarm-time">12:52:44</span></div></div>
+            <div class="alarm-row"><div class="alarm-dot info"></div><div class="alarm-content"><div class="alarm-title" style="font-weight:400;color:var(--txt2)">[INFO] Turbina WT-07 — manutenção preditiva: lubrificação caixa de engrenagens (48h)</div></div><div class="alarm-meta"><span class="alarm-time">12:00:00</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN: NETWORK ═══════════════════════════════════ -->
+      <div class="screen" id="screen-network">
+        <div class="screen-title">Rede IoT Industrial</div>
+        <div class="screen-sub">Topologia híbrida: WiFi 6 · LoRaWAN · Gigabit Ethernet · RS-485 MODBUS · OPC-UA</div>
+        <div class="g4 mb12">
+          <div class="kpi green"><div class="kpi-label">Nós online</div><div class="kpi-val ok">38 / 39</div><div class="kpi-sub">W-03 com latência alta</div></div>
+          <div class="kpi blue"><div class="kpi-label">Latência média (LAN)</div><div class="kpi-val info" id="net-lat">3.8 ms</div><div class="kpi-sub">Ethernet industrial · &lt;5ms SLA</div></div>
+          <div class="kpi teal"><div class="kpi-label">Throughput total</div><div class="kpi-val">842 Mbps</div><div class="kpi-sub">Backbone fibra óptica</div></div>
+          <div class="kpi green"><div class="kpi-label">Uptime rede</div><div class="kpi-val ok">99.94%</div><div class="kpi-sub">Últimas 2.160 horas (90d)</div></div>
+        </div>
+        <div class="g2 mb12">
+          <div class="card">
+            <div class="card-title">Topologia — Wired + Wireless</div>
+            <svg viewBox="0 0 480 320" style="width:100%;display:block">
+              <!-- Core switch -->
+              <rect x="190" y="20" width="100" height="40" rx="6" fill="var(--bg2)" stroke="var(--teal)" stroke-width="2"/>
+              <text x="240" y="37" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="600" fill="var(--teal)">Core Switch</text>
+              <text x="240" y="50" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--txt2)">10GbE Backbone</text>
+              <!-- AI Edge -->
+              <rect x="20" y="20" width="90" height="40" rx="6" fill="var(--bg2)" stroke="var(--green)" stroke-width="2"/>
+              <text x="65" y="37" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="600" fill="var(--green)">AI Edge Server</text>
+              <text x="65" y="50" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--txt2)">Kraefegg AI · 1GbE</text>
+              <line x1="110" y1="40" x2="190" y2="40" stroke="var(--green)" stroke-width="1.5"/>
+              <!-- SCADA Server -->
+              <rect x="370" y="20" width="90" height="40" rx="6" fill="var(--bg2)" stroke="var(--blue)" stroke-width="1.5"/>
+              <text x="415" y="37" text-anchor="middle" font-family="var(--ui)" font-size="10" font-weight="600" fill="var(--blue)">SCADA Server</text>
+              <text x="415" y="50" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--txt2)">OPC-UA · HMI</text>
+              <line x1="370" y1="40" x2="290" y2="40" stroke="var(--blue)" stroke-width="1.5"/>
+              <!-- Industrial switches row -->
+              <rect x="40" y="110" width="80" height="36" rx="5" fill="var(--bg2)" stroke="var(--blue)" stroke-width="1.5"/>
+              <text x="80" y="125" text-anchor="middle" font-family="var(--ui)" font-size="9" font-weight="600" fill="var(--blue)">IND-SW-01</text>
+              <text x="80" y="137" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--txt2)">Eletrolisador</text>
+              <rect x="150" y="110" width="80" height="36" rx="5" fill="var(--bg2)" stroke="var(--blue)" stroke-width="1.5"/>
+              <text x="190" y="125" text-anchor="middle" font-family="var(--ui)" font-size="9" font-weight="600" fill="var(--blue)">IND-SW-02</text>
+              <text x="190" y="137" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--txt2)">SWRO</text>
+              <rect x="260" y="110" width="80" height="36" rx="5" fill="var(--bg2)" stroke="var(--blue)" stroke-width="1.5"/>
+              <text x="300" y="125" text-anchor="middle" font-family="var(--ui)" font-size="9" font-weight="600" fill="var(--blue)">IND-SW-03</text>
+              <text x="300" y="137" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--txt2)">Energia</text>
+              <rect x="370" y="110" width="80" height="36" rx="5" fill="var(--bg2)" stroke="var(--amber)" stroke-width="1.5"/>
+              <text x="410" y="125" text-anchor="middle" font-family="var(--ui)" font-size="9" font-weight="600" fill="var(--amber)">WiFi-AP W-03</text>
+              <text x="410" y="137" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--amber)">! 148ms latência</text>
+              <!-- Lines core to industrial -->
+              <line x1="240" y1="60" x2="80" y2="110" stroke="var(--blue)" stroke-width="1.2"/>
+              <line x1="240" y1="60" x2="190" y2="110" stroke="var(--blue)" stroke-width="1.2"/>
+              <line x1="240" y1="60" x2="300" y2="110" stroke="var(--blue)" stroke-width="1.2"/>
+              <line x1="240" y1="60" x2="410" y2="110" stroke="var(--amber)" stroke-width="1.2" stroke-dasharray="4 2"/>
+              <!-- Sensor nodes row -->
+              <g><circle cx="50" cy="220" r="16" fill="var(--bg2)" stroke="var(--teal)" stroke-width="1.2"/><text x="50" y="224" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--teal)">S-01</text></g>
+              <g><circle cx="90" cy="220" r="16" fill="var(--bg2)" stroke="var(--teal)" stroke-width="1.2"/><text x="90" y="224" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--teal)">S-02</text></g>
+              <g><circle cx="130" cy="220" r="16" fill="var(--bg2)" stroke="var(--teal)" stroke-width="1.2"/><text x="130" y="224" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--teal)">S-03</text></g>
+              <g><circle cx="170" cy="220" r="16" fill="var(--bg2)" stroke="var(--teal)" stroke-width="1.2"/><text x="170" y="224" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--teal)">S-04</text></g>
+              <g><circle cx="250" cy="220" r="16" fill="var(--bg2)" stroke="var(--teal)" stroke-width="1.2"/><text x="250" y="224" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--teal)">S-05</text></g>
+              <g><circle cx="290" cy="220" r="16" fill="var(--bg2)" stroke="var(--teal)" stroke-width="1.2"/><text x="290" y="224" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--teal)">S-06</text></g>
+              <g><circle cx="330" cy="220" r="16" fill="var(--bg2)" stroke="var(--teal)" stroke-width="1.2"/><text x="330" y="224" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--teal)">S-07</text></g>
+              <g><circle cx="390" cy="220" r="16" fill="var(--bg2)" stroke="var(--amber)" stroke-width="1.5"/><text x="390" y="224" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--amber)">W-03</text></g>
+              <g><circle cx="430" cy="220" r="16" fill="var(--bg2)" stroke="var(--teal)" stroke-width="1.2"/><text x="430" y="224" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--teal)">W-01</text></g>
+              <!-- Lines to sensors -->
+              <line x1="80" y1="146" x2="50" y2="204"/><line x1="80" y1="146" x2="90" y2="204"/><line x1="80" y1="146" x2="130" y2="204"/><line x1="80" y1="146" x2="170" y2="204"/>
+              <line x1="300" y1="146" x2="250" y2="204"/><line x1="300" y1="146" x2="290" y2="204"/><line x1="300" y1="146" x2="330" y2="204"/>
+              <line x1="410" y1="146" x2="390" y2="204" stroke="var(--amber)" stroke-dasharray="3 2"/><line x1="410" y1="146" x2="430" y2="204" stroke="var(--amber)" stroke-dasharray="3 2"/>
+              <!-- Protocol labels -->
+              <text x="240" y="295" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="var(--txt3)">Protocolos: MODBUS TCP · OPC-UA · MQTT · IEC 61850 · DNP3</text>
+              <text x="240" y="310" text-anchor="middle" font-family="var(--ui)" font-size="9" fill="var(--txt3)">Criptografia: TLS 1.3 · IEC 62443-3-3 · Segmentação de rede VLAN</text>
+            </svg>
+          </div>
+          <div class="card">
+            <div class="card-title">Status de Todos os Nós</div>
+            <div style="overflow-y:auto;max-height:280px">
+              <table class="sensor-table">
+                <tr><th>Nó</th><th>Tipo</th><th>IP</th><th>Latência</th><th>Status</th></tr>
+                <tr><td>AI Edge Server</td><td style="color:var(--txt2)">Servidor industrial</td><td class="sval" style="font-size:11px">10.0.1.10</td><td class="sval ok">2 ms</td><td><span class="badge ok">Online</span></td></tr>
+                <tr><td>SCADA Server</td><td style="color:var(--txt2)">HMI / OPC-UA</td><td class="sval" style="font-size:11px">10.0.1.11</td><td class="sval ok">1 ms</td><td><span class="badge ok">Online</span></td></tr>
+                <tr><td>IND-SW-01</td><td style="color:var(--txt2)">Switch Eth industrial</td><td class="sval" style="font-size:11px">10.0.2.1</td><td class="sval ok">0.8 ms</td><td><span class="badge ok">Online</span></td></tr>
+                <tr><td>IND-SW-02</td><td style="color:var(--txt2)">Switch Eth industrial</td><td class="sval" style="font-size:11px">10.0.2.2</td><td class="sval ok">0.9 ms</td><td><span class="badge ok">Online</span></td></tr>
+                <tr><td>IND-SW-03</td><td style="color:var(--txt2)">Switch Eth industrial</td><td class="sval" style="font-size:11px">10.0.2.3</td><td class="sval ok">1.1 ms</td><td><span class="badge ok">Online</span></td></tr>
+                <tr><td>WiFi-AP W-01</td><td style="color:var(--txt2)">WiFi 6 · 5GHz</td><td class="sval" style="font-size:11px">10.0.3.1</td><td class="sval ok">12 ms</td><td><span class="badge ok">Online</span></td></tr>
+                <tr><td>WiFi-AP W-02</td><td style="color:var(--txt2)">WiFi 6 · 5GHz</td><td class="sval" style="font-size:11px">10.0.3.2</td><td class="sval ok">14 ms</td><td><span class="badge ok">Online</span></td></tr>
+                <tr><td>WiFi-AP W-03</td><td style="color:var(--txt2)">WiFi 6 · 5GHz</td><td class="sval" style="font-size:11px">10.0.3.3</td><td class="sval warn">148 ms</td><td><span class="badge warn">Atenção</span></td></tr>
+                <tr><td>PLC Eletrolisador</td><td style="color:var(--txt2)">Siemens S7-1500</td><td class="sval" style="font-size:11px">10.0.4.10</td><td class="sval ok">2 ms</td><td><span class="badge ok">Online</span></td></tr>
+                <tr><td>PLC SWRO</td><td style="color:var(--txt2)">Allen-Bradley L85E</td><td class="sval" style="font-size:11px">10.0.4.20</td><td class="sval ok">3 ms</td><td><span class="badge ok">Online</span></td></tr>
+                <tr><td>S-01..S-08</td><td style="color:var(--txt2)">Sensores RS-485</td><td class="sval" style="font-size:11px">MODBUS RTU</td><td class="sval ok">5 ms</td><td><span class="badge ok">8/8 Online</span></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN: TRENDS ════════════════════════════════════ -->
+      <div class="screen" id="screen-trends">
+        <div class="screen-title">Tendências Históricas</div>
+        <div class="screen-sub">Dados das últimas 24 horas · Atualização: 5 minutos · Retenção: 5 anos</div>
+        <div class="g2 mb12">
+          <div class="card"><div class="card-title">Produção H₂ — 24h (Nm³/h)</div><div class="chart-wrap"><canvas id="chart-h2-24h" height="140"></canvas></div></div>
+          <div class="card"><div class="card-title">Eficiência PEM — 24h (%)</div><div class="chart-wrap"><canvas id="chart-eff-24h" height="140"></canvas></div></div>
+        </div>
+        <div class="g2">
+          <div class="card"><div class="card-title">Produção de Energia — 24h (MW)</div><div class="chart-wrap"><canvas id="chart-pwr-24h" height="140"></canvas></div></div>
+          <div class="card"><div class="card-title">Qualidade da Água SWRO — 24h (g/L)</div><div class="chart-wrap"><canvas id="chart-water-24h" height="140"></canvas></div></div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN: SAFETY ════════════════════════════════════ -->
+      <div class="screen" id="screen-safety">
+        <div class="screen-title">Segurança &amp; Sistema ESD</div>
+        <div class="screen-sub">IEC 61511 SIL-2 · IEC 62443-3-3 · Sistema de Parada de Emergência (ESD) ativo</div>
+        <div class="g2 mb12">
+          <div class="card">
+            <div class="card-title">Detectores de H₂ — LEL (Limite Explosivo Inferior = 4% v/v)</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Det-H2-01 — Sala Eletrolisador A</div><div class="safety-val">0.08% LEL · Alarme: 25% LEL · Trip: 50% LEL</div></div><span class="badge ok">Normal</span></div>
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Det-H2-02 — Sala Eletrolisador B</div><div class="safety-val">0.12% LEL · Alarme: 25% LEL · Trip: 50% LEL</div></div><span class="badge ok">Normal</span></div>
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Det-H2-03 — Área Compressor</div><div class="safety-val">0.06% LEL · Alarme: 25% LEL · Trip: 50% LEL</div></div><span class="badge ok">Normal</span></div>
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Det-H2-04 — Tanque Armazenamento</div><div class="safety-val">0.04% LEL · Alarme: 25% LEL · Trip: 50% LEL</div></div><span class="badge ok">Normal</span></div>
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Det-H2-05..08 — Perímetro externo</div><div class="safety-val">0.0% LEL · Todos abaixo de 0.1%</div></div><span class="badge ok">Normal</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Detectores de NH₃ — TLV-TWA: 25 ppm</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Det-NH3-01 — Síntese Haber-Bosch</div><div class="safety-val">12 ppm · Alarme: 25 ppm · ESD: 100 ppm</div></div><span class="badge ok">Normal</span></div>
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Det-NH3-02 — Tanque criogênico</div><div class="safety-val">8 ppm · Alarme: 25 ppm · ESD: 100 ppm</div></div><span class="badge ok">Normal</span></div>
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Det-NH3-03..06 — Área perimetral</div><div class="safety-val">2–6 ppm · Todos abaixo de TLV-TWA</div></div><span class="badge ok">Normal</span></div>
+            </div>
+            <div class="divider"></div>
+            <div class="card-title">Sistemas de Segurança Críticos</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Válvulas de alívio de pressão (PSV)</div><div class="safety-val">PSV-01 a PSV-12 · Todas em posição fechada · Testadas 30/03/2026</div></div><span class="badge ok">OK</span></div>
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Sistema de ventilação emergencial</div><div class="safety-val">Ventiladores em stand-by · Resposta: &lt; 10s · Teste: semanal</div></div><span class="badge ok">Armado</span></div>
+              <div class="safety-indicator ok"><div class="safety-icon">✓</div><div class="safety-text"><div class="safety-name">Sistema de dilúvio (sprinklers H₂)</div><div class="safety-val">Pressão: 8.2 bar · Cobertura: 100% área crítica</div></div><span class="badge ok">Armado</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="esd-panel">
+          <div class="esd-title">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="var(--red)"><path d="M8 1L1 13h14L8 1zm0 3l4.5 8h-9L8 4z"/><rect x="7.5" y="7" width="1" height="3" fill="var(--bg0)"/><rect x="7.5" y="11" width="1" height="1" fill="var(--bg0)"/></svg>
+            Sistema ESD — Emergency Shutdown
+          </div>
+          <div class="esd-sub">
+            O sistema ESD (IEC 61511 SIL-2) está armado e pronto. Em caso de detecção de H₂ &gt; 50% LEL, NH₃ &gt; 100 ppm, pressão de eletrolisador acima de 40 bar, ou incêndio detectado, o sistema realizará parada automática segura em &lt; 2 segundos. Apenas operadores autorizados (Nível 4) podem acionar o reset manual após evento ESD.
+          </div>
+          <div class="btn-row">
+            <button class="esd-btn" onclick="if(confirm('ATENÇÃO: Confirma parada de emergência de toda a planta?'))alert('ESD acionado — Contate o supervisor imediatamente.')">PARADA DE EMERGÊNCIA</button>
+            <button class="btn-secondary">Teste ESD (modo simulação)</button>
+            <button class="btn-secondary">Relatório SIL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN: AI ═════════════════════════════════════════ -->
+      <div class="screen" id="screen-ai">
+        <div class="screen-title">IA Operacional — Assistente Kraefegg AI</div>
+        <div class="screen-sub">Modelo treinado em dados operacionais AquaH₂ · Decisões autônomas ativas · Precisão preditiva: 96.4%</div>
+        <div class="g2 mb12">
+          <div class="card" style="display:flex;flex-direction:column">
+            <div class="card-title">Assistente IA — AquaH₂ Operator</div>
+            <div class="chat-area" id="chat-area">
+              <div class="chat-msg chat-ai">Olá, <strong>Railson</strong>. Sistema operando normalmente. Detectei que o <strong>Stack B</strong> está com temperatura em 78.9°C, próximo do limite de aviso (80°C). Recomendo reduzir o fluxo de H₂O de entrada de 21.8 para 20.1 L/min por 15 minutos. Posso aplicar isso automaticamente?</div>
+            </div>
+            <div class="quick-chips">
+              <div class="chip" onclick="quickAI('Status atual de todos os sistemas')">Status geral</div>
+              <div class="chip" onclick="quickAI('Otimize a produção de H₂ automaticamente')">Otimizar produção</div>
+              <div class="chip" onclick="quickAI('Qual é o risco de falha na próxima semana?')">Análise de risco</div>
+              <div class="chip" onclick="quickAI('Relatório de eficiência do turno')">Relatório turno</div>
+              <div class="chip" onclick="quickAI('Aplique a correção de fluxo no Stack B')">Corrigir Stack B</div>
+            </div>
+            <div class="chat-input-row">
+              <input class="chat-input" id="chat-inp" placeholder="Pergunte ao operador IA..." onkeydown="if(event.key==='Enter')sendChat()">
+              <button class="chat-send" onclick="sendChat()">Enviar</button>
+            </div>
+          </div>
+          <div>
+            <div class="card mb12">
+              <div class="card-title">Decisões autônomas IA — Últimas 8h</div>
+              <div class="alarm-row"><div class="alarm-dot info" style="background:var(--purple);box-shadow:0 0 4px var(--purple)"></div><div class="alarm-content"><div class="alarm-title">Ajuste de fluxo H₂O Stack A: 22.1 → 21.4 L/min</div><div class="alarm-detail">Razão: variação temperatura +1.8°C. Eficiência otimizada +0.4%.</div></div><div class="alarm-meta"><span class="alarm-time">2h atrás</span></div></div>
+              <div class="alarm-row"><div class="alarm-dot info" style="background:var(--purple);box-shadow:0 0 4px var(--purple)"></div><div class="alarm-content"><div class="alarm-title">Redistribuição: 3.2 MW BESS → Eletrolisador</div><div class="alarm-detail">Razão: queda de vento de 11 → 7 m/s. Produção H₂ mantida estável.</div></div><div class="alarm-meta"><span class="alarm-time">5h atrás</span></div></div>
+              <div class="alarm-row"><div class="alarm-dot info" style="background:var(--purple);box-shadow:0 0 4px var(--purple)"></div><div class="alarm-content"><div class="alarm-title">Agendamento CIP SWRO PV-03 para 05/04</div><div class="alarm-detail">Razão: fouling index atingiu 41%. Janela de manutenção: 02:00–06:00h.</div></div><div class="alarm-meta"><span class="alarm-time">8h atrás</span></div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Métricas IA — 30 dias</div>
+              <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Precisão preditiva (falhas)</span><span class="sval ok">96.4%</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Otimizações aplicadas</span><span class="sval">1.847</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Downtime evitado</span><span class="sval ok">22.4 horas</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Ganho de eficiência PEM</span><span class="sval ok">+1.8%</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Economia de energia</span><span class="sval ok">R$ 142.000</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2)">Alertas falso-positivos</span><span class="sval ok">2.1%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Log de Sistema — Tempo real</div>
+          <div class="log-area" id="sys-log"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /app-body -->
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STATE & CONFIG
+══════════════════════════════════════════════════════ */
+var t=0,logTick=0;
+var chartInstances={};
+
+var S={
+  ta:72.3,tb:78.9,pa:31.2,pb:34.8,ia:4820,ib:4710,va:1.89,vb:1.91,fa:22.1,fb:21.8,
+  ha:112,hb:109,eff:71.4,
+  solar:18.4,wind:20.1,irr:842,wspd:9.4,bess:82,
+  swro_press:62.1,swro_temp:26.8,
+  h2total:0,nh3rate:118,lat:3.8
+};
+
+function rng(base,amp){return base+amp*(Math.sin(t*.08)*0.6+Math.sin(t*.21)*0.3+Math.random()*.2-.1)}
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
+function fmt(v,d){return v.toFixed(d)}
+
+/* ═══════════════════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════════════════ */
+function doLogin(){
+  var u=document.getElementById('login-user').value;
+  var p=document.getElementById('login-pass').value;
+  if(!u||!p){return alert('Insira usuário e senha.');}
+  document.getElementById('login').style.opacity='0';
+  document.getElementById('login').style.transition='opacity .5s';
+  setTimeout(function(){
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    initCharts();
+    startSim();
+    startLog();
+    tickClock();
+  },500);
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════ */
+function nav(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
+  });
+  if(id==='trends'){setTimeout(initTrends,100)}
+}
+
+/* ═══════════════════════════════════════════════════════
+   CLOCK & UPTIME
+══════════════════════════════════════════════════════ */
+var uptimeMin=720*60+14;
+function tickClock(){
+  var d=new Date();
+  var pad=n=>String(n).padStart(2,'0');
+  document.getElementById('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  uptimeMin++;
+  var h=Math.floor(uptimeMin/60),m=uptimeMin%60;
+  document.getElementById('uptime-display').textContent=h+'h '+pad(m)+'m';
+  document.getElementById('ov-datetime').textContent='Atualizado: '+d.toLocaleDateString('pt-BR')+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())+' · Modo: Automático IA · Operador: Railson';
+  setTimeout(tickClock,1000);
+}
+
+/* ═══════════════════════════════════════════════════════
+   DATA SIMULATION
+══════════════════════════════════════════════════════ */
+function updateState(){
+  t++;
+  S.ta=clamp(rng(72.3,1.4),68,76);
+  S.tb=clamp(rng(78.9,1.8),75,82);
+  S.pa=clamp(rng(31.2,1.6),28,35);
+  S.pb=clamp(rng(34.8,2.0),30,37);
+  S.ia=clamp(rng(4820,150),4200,5500);
+  S.ib=clamp(rng(4710,140),4100,5400);
+  S.fa=clamp(rng(22.1,1.2),18,28);
+  S.fb=clamp(rng(21.8,1.2),18,28);
+  S.ha=clamp(rng(112,4),98,125);
+  S.hb=clamp(rng(109,4),95,122);
+  S.eff=clamp(rng(71.4,1.5),68,76);
+  S.solar=clamp(rng(18.4,2.2),14,24);
+  S.wind=clamp(rng(20.1,2.5),15,25);
+  S.irr=clamp(rng(842,60),600,1000);
+  S.wspd=clamp(rng(9.4,1.8),5,14);
+  S.bess=clamp(rng(82,2),70,95);
+  S.swro_press=clamp(rng(62.1,2),58,67);
+  S.swro_temp=clamp(rng(26.8,0.8),24,30);
+  S.lat=clamp(rng(3.8,1.2),1,8);
+  S.h2total=S.ha+S.hb;
+  var totalPwr=S.solar+S.wind;
+
+  // Header
+  set('h-h2',fmt((S.h2total/1000)*4.48,1)+' kg/h');
+  set('h-pwr',fmt(totalPwr,1)+' MW');
+  set('h-eff',fmt(S.eff,1)+'%');
+  set('h-water',fmt(S.h2total*.0157,2)+' m³/min');
+  set('h-bess',Math.round(S.bess)+'%');
+
+  // KPIs
+  var h2kg=S.h2total/1000*4.48;
+  set('kpi-h2',fmt(h2kg,1)+' <span style="font-size:13px;color:var(--txt2)">kg/h</span>');
+  set('kpi-pwr',fmt(totalPwr,1)+' <span style="font-size:13px;color:var(--txt2)">MW</span>');
+
+  // Overview
+  set('ov-ta',fmt(S.ta,1)+' °C','sval '+(S.ta>77?'warn':'ok'));
+  set('ov-tb',fmt(S.tb,1)+' °C','sval '+(S.tb>78?'warn':'ok'));
+  set('ov-press',fmt(S.pa,1)+' bar');
+  set('ov-swro-press',fmt(S.swro_press,1)+' bar');
+
+  // Ring efficiency
+  var eff_offset=201-(201*S.eff/100);
+  var r=document.getElementById('ring-eff');if(r)r.setAttribute('stroke-dashoffset',eff_offset.toFixed(1));
+  var rv=document.getElementById('ring-eff-val');if(rv)rv.textContent=fmt(S.eff,1);
+
+  // BESS ring
+  var br=document.getElementById('ring-bess');if(br){br.setAttribute('stroke-dashoffset',(201-(201*S.bess/100)).toFixed(1));}
+  var brv=document.getElementById('ring-bess-val');if(brv)brv.textContent=Math.round(S.bess);
+  set('bess-kwh',fmt(S.bess*.20,1)+' MWh');
+  set('en-bess-soc',Math.round(S.bess)+'%');
+
+  // Electrolyzer table
+  setSensor('elec-a-temp',fmt(S.ta,1)+' °C',S.ta>77?'sval warn':'sval ok');
+  setSensor('elec-a-press',fmt(S.pa,1)+' bar',S.pa>33?'sval warn':'sval');
+  setSensor('elec-a-curr',Math.round(S.ia)+' A','sval');
+  setSensor('elec-a-flow',fmt(S.fa,1)+' L/min','sval');
+  setSensor('elec-a-h2',Math.round(S.ha)+' Nm³/h','sval ok');
+  setSensor('elec-b-temp',fmt(S.tb,1)+' °C',S.tb>78?'sval warn':'sval ok');
+  setSensor('elec-b-press',fmt(S.pb,1)+' bar',S.pb>34?'sval warn':'sval');
+  setSensor('elec-b-curr',Math.round(S.ib)+' A','sval');
+  setSensor('elec-b-flow',fmt(S.fb,1)+' L/min','sval');
+  setSensor('elec-b-h2',Math.round(S.hb)+' Nm³/h','sval ok');
+
+  // Bar updates
+  setBar('elecbar-a-temp',S.ta/90,'var(--teal)');
+  setBar('elecbar-a-press',S.pa/40,'var(--blue)');
+  setBar('elecbar-b-temp',S.tb/90,S.tb>78?'var(--amber)':'var(--teal)');
+  setBar('elecbar-b-press',S.pb/40,S.pb>34?'var(--amber)':'var(--blue)');
+
+  // SWRO
+  setSensor('swro-feed-press',fmt(S.swro_press,1)+' bar','sval');
+  setSensor('swro-temp',fmt(S.swro_temp,1)+' °C','sval');
+
+  // Energy
+  set('en-solar',fmt(S.solar,1)+' <span style="font-size:13px;color:var(--txt2)">MW</span>');
+  set('en-wind',fmt(S.wind,1)+' <span style="font-size:13px;color:var(--txt2)">MW</span>');
+  set('en-bess',Math.round(S.bess)+' <span style="font-size:13px;color:var(--txt2)">%</span>');
+  set('en-irr',Math.round(S.irr)+' W/m²');
+  set('en-wspd',fmt(S.wspd,1)+' m/s');
+
+  // Network
+  set('net-lat',fmt(S.lat,1)+' ms');
+
+  // PFD
+  set('pfd-ta',fmt(S.ta,1)+'°C · '+fmt(S.pa,1)+' bar');
+  set('pfd-tb',fmt(S.tb,1)+'°C · '+fmt(S.pb,1)+' bar');
+  set('pfd-ha',Math.round(S.ha)+' Nm³/h H₂');
+  set('pfd-hb',Math.round(S.hb)+' Nm³/h H₂');
+  set('pfd-h2total',Math.round(S.h2total)+' Nm³/h');
+  set('pfd-solar',fmt(S.solar,1)+' MW');
+  set('pfd-wind',fmt(S.wind,1)+' MW');
+  set('pfd-total-pwr',fmt(totalPwr,1)+' MW total');
+  set('pfd-bess',Math.round(S.bess)+'% SoC');
+
+  // Update mini charts
+  updateMiniCharts();
+}
+
+function set(id,html,cls){
+  var el=document.getElementById(id);if(!el)return;
+  if(cls!==undefined)el.className=cls;
+  el.innerHTML=html;
+}
+function setSensor(id,html,cls){
+  var el=document.getElementById(id);if(!el)return;
+  el.className=cls||'sval';el.innerHTML=html;
+}
+function setBar(id,pct,color){
+  var el=document.getElementById(id);if(!el)return;
+  el.style.width=clamp(pct*100,0,100)+'%';
+  if(color)el.style.background=color;
+}
+
+function startSim(){
+  updateState();
+  setInterval(updateState,2000);
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHART SETUP
+══════════════════════════════════════════════════════ */
+var h2Points=[],pwr1Points=[],pwr2Points=[],labels=[];
+
+function makePoints(base,amp,n){var arr=[];for(var i=0;i<n;i++)arr.push(parseFloat((base+amp*(Math.sin(i*.2)+Math.random()*.4-.2)).toFixed(1)));return arr}
+
+function initCharts(){
+  var cfg={responsive:true,animation:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5C7A9B',font:{size:10}}}}};
+
+  // H2 mini
+  h2Points=makePoints(220,15,40);
+  pwr1Points=makePoints(18.4,2,40);
+  pwr2Points=makePoints(20.1,2.5,40);
+  labels=Array.from({length:40},(_,i)=>'');
+
+  mkChart('chart-h2','line',labels,
+    [{data:h2Points,borderColor:'#00C9A7',borderWidth:1.5,pointRadius:0,tension:.4,fill:{target:'origin',above:'rgba(0,201,167,.06)'}}],
+    {...cfg,scales:{x:{display:false},y:{min:180,max:260,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5C7A9B',font:{size:10}}}}});
+
+  mkChart('chart-energy-bal','line',labels,
+    [{data:pwr1Points,label:'Solar',borderColor:'#F59E0B',borderWidth:1.5,pointRadius:0,tension:.4},
+     {data:pwr2Points,label:'Eólica',borderColor:'#3B8FD4',borderWidth:1.5,pointRadius:0,tension:.4}],
+    {...cfg,plugins:{legend:{display:true,labels:{color:'#5C7A9B',font:{size:10},boxWidth:10}}}});
+
+  // Electrolyzer temp chart
+  mkChart('chart-temp','line',labels,
+    [{data:makePoints(72.3,1.5,40),label:'Stack A',borderColor:'#00C9A7',borderWidth:1.5,pointRadius:0,tension:.4},
+     {data:makePoints(78.9,1.8,40),label:'Stack B',borderColor:'#F59E0B',borderWidth:1.5,pointRadius:0,tension:.4}],
+    {...cfg,plugins:{legend:{display:true,labels:{color:'#5C7A9B',font:{size:10},boxWidth:10}}}});
+
+  // SWRO flow
+  mkChart('chart-swro-flow','line',labels,
+    [{data:makePoints(208,12,40),borderColor:'#3B8FD4',borderWidth:1.5,pointRadius:0,tension:.4,fill:{target:'origin',above:'rgba(59,143,212,.06)'}}],
+    {...cfg,scales:{x:{display:false},y:{min:180,max:240,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5C7A9B',font:{size:10}}}}});
+
+  // Energy gen
+  mkChart('chart-gen','line',makeH24Labels(),
+    [{label:'Solar',data:makeDayCurve(18.4,3,24),borderColor:'#F59E0B',borderWidth:1.5,pointRadius:0,tension:.4},
+     {label:'Eólica',data:makeDayCurve(20.1,3,24),borderColor:'#3B8FD4',borderWidth:1.5,pointRadius:0,tension:.4}],
+    {...cfg,plugins:{legend:{display:true,labels:{color:'#5C7A9B',font:{size:10},boxWidth:10}}},scales:{x:{display:true,ticks:{color:'#5C7A9B',font:{size:9},maxTicksLimit:6}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5C7A9B',font:{size:10}}}}});
+
+  mkChart('chart-bess','line',makeH24Labels(),
+    [{data:makeDayCurve(82,8,24),borderColor:'#10B981',borderWidth:1.5,pointRadius:0,tension:.4,fill:{target:'origin',above:'rgba(16,185,129,.06)'}}],
+    {...cfg,scales:{x:{display:true,ticks:{color:'#5C7A9B',font:{size:9},maxTicksLimit:6}},y:{min:60,max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5C7A9B',font:{size:10}}}}});
+}
+
+function initTrends(){
+  if(chartInstances['chart-h2-24h'])return;
+  var cfg={responsive:true,animation:false,plugins:{legend:{display:false}},scales:{x:{display:true,ticks:{color:'#5C7A9B',font:{size:9},maxTicksLimit:8}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5C7A9B',font:{size:10}}}}};
+  var lbl=makeH24Labels();
+  mkChart('chart-h2-24h','line',lbl,[{data:makeDayCurve(221,18,24),borderColor:'#00C9A7',borderWidth:1.5,pointRadius:0,tension:.4,fill:{target:'origin',above:'rgba(0,201,167,.06)'}}],cfg);
+  mkChart('chart-eff-24h','line',lbl,[{data:makeDayCurve(71.4,2.5,24),borderColor:'#8B5CF6',borderWidth:1.5,pointRadius:0,tension:.4}],{...cfg,scales:{x:{display:true,ticks:{color:'#5C7A9B',font:{size:9},maxTicksLimit:8}},y:{min:65,max:78,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5C7A9B',font:{size:10}}}}});
+  mkChart('chart-pwr-24h','line',lbl,[{label:'Solar',data:makeDayCurve(18.4,4,24),borderColor:'#F59E0B',borderWidth:1.5,pointRadius:0,tension:.4},{label:'Eólica',data:makeDayCurve(20.1,3,24),borderColor:'#3B8FD4',borderWidth:1.5,pointRadius:0,tension:.4}],{...cfg,plugins:{legend:{display:true,labels:{color:'#5C7A9B',font:{size:10},boxWidth:10}}}});
+  mkChart('chart-water-24h','line',lbl,[{data:makeDayCurve(.32,.04,24),borderColor:'#3B8FD4',borderWidth:1.5,pointRadius:0,tension:.4}],{...cfg,scales:{x:{display:true,ticks:{color:'#5C7A9B',font:{size:9},maxTicksLimit:8}},y:{min:.2,max:.5,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5C7A9B',font:{size:10},callback:v=>v.toFixed(2)}}}});
+}
+
+function mkChart(id,type,labels,datasets,options){
+  var c=document.getElementById(id);if(!c)return;
+  if(chartInstances[id])chartInstances[id].destroy();
+  chartInstances[id]=new Chart(c,{type,data:{labels,datasets},options});
+}
+
+function makeH24Labels(){
+  var now=new Date(),arr=[];
+  for(var i=23;i>=0;i--){var d=new Date(now-i*3600000);arr.push(String(d.getHours()).padStart(2,'0')+':00');}
+  return arr;
+}
+function makeDayCurve(base,amp,n){
+  return Array.from({length:n},(_,i)=>parseFloat((base+amp*(Math.sin(i*.5+1)+Math.random()*.4-.2)).toFixed(2)));
+}
+
+function updateMiniCharts(){
+  if(!chartInstances['chart-h2'])return;
+  var c=chartInstances['chart-h2'];
+  c.data.datasets[0].data.push(S.h2total);
+  if(c.data.datasets[0].data.length>40)c.data.datasets[0].data.shift();
+  c.update('none');
+
+  var c2=chartInstances['chart-energy-bal'];
+  if(c2){
+    c2.data.datasets[0].data.push(S.solar);
+    c2.data.datasets[1].data.push(S.wind);
+    if(c2.data.datasets[0].data.length>40){c2.data.datasets[0].data.shift();c2.data.datasets[1].data.shift();}
+    c2.update('none');
+  }
+
+  var c3=chartInstances['chart-temp'];
+  if(c3){
+    c3.data.datasets[0].data.push(S.ta);
+    c3.data.datasets[1].data.push(S.tb);
+    if(c3.data.datasets[0].data.length>40){c3.data.datasets[0].data.shift();c3.data.datasets[1].data.shift();}
+    c3.update('none');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   CONTROLS
+══════════════════════════════════════════════════════ */
+function updCtrl(el,outId,suffix){
+  document.getElementById(outId).textContent=el.value+suffix;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ALARM ACK
+══════════════════════════════════════════════════════ */
+function ackAlarm(btn){
+  var row=btn.closest('.alarm-row');
+  row.style.opacity='.4';
+  btn.textContent='Confirmado';
+  btn.style.color='var(--green)';
+  btn.style.borderColor='var(--green)';
+  var badge=document.getElementById('nav-alarm-badge');
+  var n=parseInt(badge.textContent||'0');
+  if(n>1){badge.textContent=n-1;}
+  else{badge.remove();}
+  var hb=document.getElementById('alarm-count');
+  var cur=parseInt((hb.textContent||'0 Alarmes'));
+  if(cur>1){hb.textContent=(cur-1)+' Alarmes';}
+  else{hb.textContent='0 Alarmes';document.getElementById('alarm-btn').className='hdr-alarm-btn clear';}
+}
+
+/* ═══════════════════════════════════════════════════════
+   PFD CLICK
+══════════════════════════════════════════════════════ */
+var pfdInfos={
+  'seawater':'Captação de água do mar · Salinidade: 35.2 g/L · Temperatura: 26.8°C · Vazão intake: 12.500 m³/dia · SDI pré-tratamento: 2.8',
+  'swro':'SWRO · Veolia VONTM · 6 vasos de pressão · Pressão: 62.1 bar · Recuperação: 40% · Produto: 5.000 m³/dia · 0.32 g/L',
+  'watertank':'Tanque H₂O purificada · Volume útil: 800 m³ · Nível: 72% · Temperatura: 22°C · Alimenta ambos os stacks de eletrolisador',
+  'stackA':'PEM Stack A · 25 MW · 350 células · Temp: '+fmt(S.ta,1)+'°C · Pressão: '+fmt(S.pa,1)+' bar · H₂: '+Math.round(S.ha)+' Nm³/h · Eficiência: '+fmt(S.eff,1)+'% LHV',
+  'stackB':'PEM Stack B · 25 MW · 350 células · Temp: '+fmt(S.tb,1)+'°C ⚠ · Pressão: '+fmt(S.pb,1)+' bar · H₂: '+Math.round(S.hb)+' Nm³/h · Atenção: temperatura próxima ao limite',
+  'compressor':'Compressor diafragma · PDC Machines · Pressão saída: 900 bar · Vazão: '+Math.round(S.h2total/6)+' Nm³/h · Potência: 1.8 MW',
+  'h2tank':'Tanque H₂ comprimido · Vol: 50 m³ · Nível: 48% (2.4 t H₂) · Pressão: 874 bar · Temperatura: 22°C · Autonomia: 23 horas',
+  'nh3':'Síntese NH₃ verde · Haber-Bosch · Temperatura reator: 425°C · Pressão: 180 bar · Produção: '+Math.round(S.nh3rate)+' kg/h · Conversão: 22.4%',
+  'solar':'Parque Solar PV · 25 MWp · Bifacial monocrystalline · Irradiância: '+Math.round(S.irr)+' W/m² · Geração atual: '+fmt(S.solar,1)+' MW · PR: 0.82',
+  'wind':'Parque Eólico · 10 turbinas 2.5 MW · Velocidade: '+fmt(S.wspd,1)+' m/s · Geração atual: '+fmt(S.wind,1)+' MW · Turbinas online: 10/10',
+  'ems':'EMS/SGE · ISO 50001 · Potência total: '+fmt(S.solar+S.wind,1)+' MW · Balanço: Eletrolisador '+fmt(S.solar+S.wind-.9,1)+' MW · SWRO 0.9 MW · Auxiliares 0.2 MW',
+  'bess':'BESS Li-ion · 20 MWh / 20 MW · SoC: '+Math.round(S.bess)+'% · Energia: '+fmt(S.bess*.20,1)+' MWh · Temperatura: 28.4°C · SoH: 96.2%'
+};
+function pfdClick(id){
+  var bar=document.getElementById('pfd-info-bar');
+  if(bar&&pfdInfos[id])bar.textContent=pfdInfos[id];
+}
+
+/* ═══════════════════════════════════════════════════════
+   AI CHAT
+══════════════════════════════════════════════════════ */
+var aiIdx=0;
+var aiResponses=[
+  function(){return 'Sistema <strong>operando normalmente</strong>. Stack A: '+fmt(S.ta,1)+'°C · '+fmt(S.pa,1)+' bar · '+Math.round(S.ha)+' Nm³/h. Stack B: '+fmt(S.tb,1)+'°C (atenção) · '+fmt(S.pb,1)+' bar. SWRO: 0.32 g/L produto · 62 bar. BESS: '+Math.round(S.bess)+'% SoC. <strong>Nenhum alarme crítico ativo.</strong>'},
+  function(){return 'Otimização aplicada: <strong>Stack A</strong> fluxo H₂O ajustado de '+fmt(S.fa,1)+' para '+fmt(S.fa*.94,1)+' L/min. <strong>Stack B</strong> temperatura deve estabilizar em 76°C nos próximos 12 minutos. Ganho estimado de eficiência: <strong>+0.6%</strong>. Monitorando temperatura a cada 30s.'},
+  function(){return 'Análise de risco — próximos 7 dias:<br>• PV-03 SWRO: fouling 41%, <strong>limpeza CIP necessária em 14 dias</strong> (baixo risco)<br>• Turbina WT-07: lubrificação em 48h (baixo risco)<br>• Stack B: temperatura elevada, monitorar (risco médio)<br>• Probabilidade de falha crítica (72h): <strong>2.8%</strong>'},
+  function(){return 'Relatório do turno (08:00–'+new Date().getHours()+':00):<br>• H₂ produzido: <strong>'+Math.round(S.h2total*.0448*8)+' kg</strong> (meta: 158 kg)<br>• Energia gerada: <strong>'+fmt((S.solar+S.wind)*8,0)+' MWh</strong><br>• Água dessalinizada: <strong>'+Math.round(S.h2total*.0157*480)+' m³</strong><br>• Eficiência média: <strong>'+fmt(S.eff,1)+'%</strong><br>• Tempo operacional: 100% · Sem paradas'},
+  function(){return 'Correção aplicada ao <strong>Stack B</strong>: fluxo H₂O reduzido de '+fmt(S.fb,1)+' → '+fmt(S.fb*.92,1)+' L/min. Temperatura projetada: 76.2°C em 15 min. Alarm ALM-0042 será cancelado automaticamente quando temp &lt; 78°C. Ação registrada no log de auditoria (ref: OA-'+Math.floor(Math.random()*9000+1000)+').'}
+];
+function sendChat(){
+  var inp=document.getElementById('chat-inp');
+  var v=inp.value.trim();if(!v)return;
+  addMsg(v,true);inp.value='';
+  var think=document.createElement('div');
+  think.className='chat-thinking';
+  think.innerHTML='<div class="thinking-dots"><span></span><span></span><span></span></div>';
+  document.getElementById('chat-area').appendChild(think);
+  document.getElementById('chat-area').scrollTop=99999;
+  setTimeout(function(){
+    think.remove();
+    addMsg(aiResponses[aiIdx%aiResponses.length](),false);
+    aiIdx++;
+  },1100+Math.random()*800);
+}
+function quickAI(msg){document.getElementById('chat-inp').value=msg;sendChat();}
+function addMsg(html,isUser){
+  var d=document.createElement('div');
+  d.className='chat-msg '+(isUser?'chat-user':'chat-ai');
+  d.innerHTML=html;
+  document.getElementById('chat-area').appendChild(d);
+  document.getElementById('chat-area').scrollTop=99999;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SYSTEM LOG
+══════════════════════════════════════════════════════ */
+var logMsgs=function(){
+  var d=new Date();
+  var pad=n=>String(n).padStart(2,'0');
+  var ts='['+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())+']';
+  var opts=[
+    [ts+' [DATA]  Elec-A  T='+fmt(S.ta,1)+'°C  P='+fmt(S.pa,1)+' bar  I='+Math.round(S.ia)+'A  H2='+Math.round(S.ha)+' Nm³/h','#5C7A9B'],
+    [ts+' [DATA]  Elec-B  T='+fmt(S.tb,1)+'°C  P='+fmt(S.pb,1)+' bar  I='+Math.round(S.ib)+'A  H2='+Math.round(S.hb)+' Nm³/h',S.tb>78?'#F59E0B':'#5C7A9B'],
+    [ts+' [DATA]  Solar='+fmt(S.solar,1)+'MW  Wind='+fmt(S.wind,1)+'MW  BESS='+Math.round(S.bess)+'%  Total='+fmt(S.solar+S.wind,1)+'MW','#5C7A9B'],
+    [ts+' [DATA]  SWRO  P='+fmt(S.swro_press,1)+'bar  Prod='+fmt(S.h2total*.0157,2)+'m³/min  Sal=0.32g/L','#5C7A9B'],
+    [ts+' [NET]   Latencia='+fmt(S.lat,1)+'ms  Nos=38/39  Throughput='+Math.round(800+Math.random()*80)+'Mbps','#5C7A9B'],
+    [ts+' [AI]    Ciclo '+t+' concluido. Score='+fmt(S.eff,1)+'%. Sem anomalias criticas.','#00C9A7'],
+    [ts+' [SEC]   Det-H2-01='+fmt(Math.random()*.2,3)+'%LEL  Det-NH3-01='+Math.round(10+Math.random()*4)+'ppm  ESD=ARMADO','#5C7A9B'],
+  ];
+  return opts[Math.floor(Math.random()*opts.length)];
+};
+function startLog(){
+  var area=document.getElementById('sys-log');if(!area)return;
+  function addLine(){
+    var pair=logMsgs();
+    var d=document.createElement('div');
+    d.textContent=pair[0];d.style.color=pair[1];
+    area.appendChild(d);
+    if(area.children.length>120)area.removeChild(area.firstChild);
+    area.scrollTop=area.scrollHeight;
+  }
+  for(var i=0;i<8;i++)addLine();
+  setInterval(addLine,1600);
+}
+
+/* Chart.js global defaults */
+if(typeof Chart!=='undefined'){
+  Chart.defaults.color='#5C7A9B';
+  Chart.defaults.borderColor='rgba(255,255,255,.04)';
+}
+</script>
+</body>
+</html>
